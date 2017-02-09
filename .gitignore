@@ -1,0 +1,45 @@
+
+# autotools directories:
+/tmp*/
+!/tmpfiles.d/
+/autom4te.cache/
+/config/
+/m4/
+/chessproblem-*/
+
+# autotools/doxygen files:
+/ABOUT-NLS
+/aclocal.m4
+/confdefs.h
+/config.h
+/config.log
+/config.rpath
+/config.status
+/configure
+/conftest*
+/stamp-h1
+/a.out
+
+/src/chessproblem
+
+!/zsh/_chessproblem*.*
+/zsh/_chessproblem
+
+# General patterns are last:
+!*.in
+!*Makefile.am
+*.dirstamp
+*.exe
+*.o
+*.o-*
+*.o.*
+*.obj
+*Makefile
+*Makefile.in
+*Makefile.in.in
+*tags
+*~
+*.tar
+*.tar.?
+*.tar.??
+*.tar.???

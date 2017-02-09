@@ -1,0 +1,30 @@
+If you received a tarball with the ./configure file, you can use the usual
+GNU type installation procedure:
+
+./configure  (possibly with some options, see ./configure --help for details)
+make
+make install (possibly as root)
+
+If you have the plain git repository, you first need to call autotools
+(which you must have in sufficiently new versions):
+
+./autogen.sh
+
+will probably do the trick. Alternatively, you might try
+
+./contrib/make.sh
+
+which does everything (except "make install") with certain options
+(see ./contrib/make.sh -h for help). This is convenient for me but
+might or might not be suitable for you...
+Similarly, there exist the commands
+
+./contrib/tarball.sh
+./contrib/clean.sh
+./contrib/cpplint
+
+to create a tarball, to clean up all temporary files, or to check all
+source files for google style complience (if you have cpplint.py).
+Finally, when you have compiled "chessproblems" you can run a test suite with
+
+./contrib/test.pl
