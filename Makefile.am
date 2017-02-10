@@ -9,13 +9,14 @@ AUTOMAKE_OPTIONS = foreign 1.11.2 no-dist-gzip dist-xz subdir-objects -Wobsolete
 CLEANFILES = chessproblem
 
 chessproblem_SOURCES = \
+src/m_assert.h \
+src/m_likely.h \
+src/formated.cc \
+src/formated.h \
 src/chess.cc \
 src/chess.h \
 src/chessproblem.cc \
 src/chessproblem.h \
-src/m_assert.h \
-src/m_inttypes.h \
-src/m_likely.h \
 src/main.cc
 
 bin_PROGRAMS = chessproblem

@@ -190,52 +190,75 @@ class Move {
   }
 
   // append a human readable form of the move
-  void Readable(std::string *res, const Field &chess_field) const;
+  void Append(std::string *res, const Field &chess_field) const;
 
-  void Readable(std::string *res, Figure from_figure, Figure to_figure) const;
+  void Append(std::string *res, Figure from_figure, Figure to_figure) const;
 
-  void Readable(std::string *res) const {
-    Readable(res, kPawn, kPawn);
+  // this is a poor man's version of Append (no figure name is contained)
+  void Append(std::string *res) const {
+    Append(res, kPawn, kPawn);
   }
 
   // return a human readable form of the move
-  std::string Readable(const Field &chess_field) const {
+  std::string str(const Field &chess_field) const {
     std::string r;
-    Readable(&r, chess_field);
+    Append(&r, chess_field);
     return r;
   }
 
-  std::string Readable(Figure from_figure, Figure to_figure) const {
+  std::string str(Figure from_figure, Figure to_figure) const {
     std::string r;
-    Readable(&r, from_figure, to_figure);
+    Append(&r, from_figure, to_figure);
     return r;
   }
 
-  std::string Readable() const {
-    return Readable(kPawn, kPawn);
+  // this is a poor man's version of str (no figure name is contained)
+  std::string str() const {
+    return str(kPawn, kPawn);
+  }
+
+  // Convenience wrapper for str()
+  operator std::string() {
+    return str();
   }
 };
+
+inline static std::ostream& operator<<(std::ostream& os, const Move& m);
+inline static std::ostream& operator<<(std::ostream& os, const Move& m) {
+  os << m.str();
+  return os;
+}
 
 class MoveList : public std::vector<Move> {
  public:
   // append a human readable form of the list
-  void Readable(std::string *res, const Field &chess_field) const;
+  void Append(std::string *res, const Field &chess_field) const;
 
-  void Readable(std::string *res) const;
+  void Append(std::string *res) const;
 
-  // return a human readable form of the list
-  std::string Readable(const Field &chess_field) const {
+  std::string str(const Field &chess_field) const {
     std::string r;
-    Readable(&r, chess_field);
+    Append(&r, chess_field);
     return r;
   }
 
-  std::string Readable() const {
+  std::string str() const {
     std::string r;
-    Readable(&r);
+    Append(&r);
     return r;
+  }
+
+  // Convenience wrapper for str()
+  operator std::string() {
+    return str();
   }
 };
+
+inline static std::ostream& operator<<(std::ostream& os, const MoveList& l);
+inline static std::ostream& operator<<(std::ostream& os, const MoveList& l) {
+  os << l.str();
+  return os;
+}
 
 class MoveStore {
  public:
@@ -250,33 +273,57 @@ class MoveStore {
   }
 
   // append a human readable form of the move
-  void Readable(std::string *res) const {
-    move_->Readable(res, from_figure_, to_figure_);
+  void Append(std::string *res) const {
+    move_->Append(res, from_figure_, to_figure_);
   }
 
   // return a human readable form of the move
-  std::string Readable() const {
-    return move_->Readable(from_figure_, to_figure_);
+  std::string str() const {
+    return move_->str(from_figure_, to_figure_);
+  }
+
+  // Convenience wrapper for str()
+  operator std::string() const {
+    return str();
   }
 };
+
+inline static std::ostream& operator<<(std::ostream& os, const MoveStore& m);
+inline static std::ostream& operator<<(std::ostream& os, const MoveStore& m) {
+  os << m.str();
+  return os;
+}
+
 
 class MoveStack : public std::deque<MoveStore> {
  public:
   // append a human readable form of the stack
-  void Readable(std::string *res) const;
+  void Append(std::string *res) const;
 
   // return a human readable form of the move
-  std::string Readable() const {
+  std::string str() const {
     std::string r;
-    Readable(&r);
+    Append(&r);
     return r;
   }
+
+  // Convenience wrapper for str()
+  operator std::string() const {
+    return str();
+  }
 };
+
+inline static std::ostream& operator<<(std::ostream& os, const MoveStack& s);
+inline static std::ostream& operator<<(std::ostream& os, const MoveStack& s) {
+  os << s.str();
+  return os;
+}
 
 /*
 Field is the main class to maintain the chess rules.
 
-All coordinates are in the form "Pos". You can call CalcPos() or Readable()
+All coordinates are in the form "Pos".
+You can call CalcPos() or LetterNumber() (or Append()/str())
 to generate from/to human readable form.
 
 Note that to initialize a field, you not only have to place the figures using
@@ -426,42 +473,50 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // For illegal arguments, the value kFieldEnd is returned
   static Pos CalcPos(const std::string &letter_number);
 
-  // A printable form of the field is appended
-  void Readable(std::string *result) const;
+  // Append a printable form of the field
+  void Append(std::string *result) const;
 
-  std::string Readable() const {
+  // return a printable form of the field
+  std::string str() const {
     std::string r;
-    Readable(&r);
+    Append(&r);
     return r;
   }
 
-  static void Readable(char *letter, char *number, Pos pos);
+  // Convenience wrapper for str()
+  operator std::string() const {
+    return str();
+  }
 
-  // The position is appended in a readable form
-  static void Readable(std::string *letter_number, Pos pos);
+  static void LetterNumber(char *letter, char *number, Pos pos);
 
-  static std::string Readable(Pos pos) {
+  // Append position name in a human readable form
+  static void Append(std::string *letter_number, Pos pos);
+
+  static std::string str(Pos pos) {
     std::string result;
-    Readable(&result, pos);
+    Append(&result, pos);
     return result;
   }
 
-  // The move is appended in a readable form
-  void Readable(std::string *result, const Move& m) const {
-    m.Readable(result, *this);
+  // Append Move is appended in a human readable form
+  void Append(std::string *result, const Move& m) const {
+    m.Append(result, *this);
   }
 
-  std::string Readable(const Move& m) const {
-    return m.Readable(*this);
+  // Return Move in a human readable form
+  std::string str(const Move& m) const {
+    return m.str(*this);
   }
 
-  // The move_list is appended in a readable form
-  void Readable(std::string *result, const MoveList& move_list) const {
-    move_list.Readable(result, *this);
+  // Append MoveList in a human readable form
+  void Append(std::string *result, const MoveList& move_list) const {
+    move_list.Append(result, *this);
   }
 
-  std::string Readable(const MoveList& move_list) const {
-    return move_list.Readable(*this);
+  // Return MoveList in a human readable form
+  std::string str(const MoveList& move_list) const {
+    return move_list.str(*this);
   }
 
   void PlaceFigure(Figure figure, Pos pos);
@@ -659,6 +714,12 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   Pos kings_[kIndexMax + 1];
   MoveStack move_stack_;
 };
+
+inline static std::ostream& operator<<(std::ostream& os, const Field& f);
+inline static std::ostream& operator<<(std::ostream& os, const Field& f) {
+  os << f.str();
+  return os;
+}
 
 }  // namespace chess
 

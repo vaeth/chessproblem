@@ -36,7 +36,7 @@ int ChessProblem::Solve() {
       // All players "win" always so that we do not cut
       mate_value_ = nomate_value_ = nonsuccess_value_ = kWin;
   }
-  // fputs(Readable().c_str(), stdout);
+  // format::Print() % Readable();
   RecursiveSolver();
   return num_solutions_found_;
 }

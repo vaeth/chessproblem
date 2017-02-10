@@ -1,0 +1,9 @@
+# ChangeLog for chessproblem
+
+*chessproblem-1.1
+	Martin Väth <martin at mvath.de>:
+	- Reimplement I/O using a Format class
+
+*chessproblem-1.0
+	Martin Väth <martin at mvath.de>:
+	- Initial implementation within about 1 day (+ about 1 day testing)

@@ -58,7 +58,7 @@ const PosDelta Field::black_pawn_hit_deltas[] = {
   kBlackPawnHit2Delta
 };
 
-void Move::Readable(string *res, Figure from_figure, Figure to_figure) const {
+void Move::Append(string *res, Figure from_figure, Figure to_figure) const {
   switch (move_type_) {
     case Move::kShortCastling:
       res->append("0-0");
@@ -72,11 +72,11 @@ void Move::Readable(string *res, Figure from_figure, Figure to_figure) const {
       break;
   }
   res->append(uncolored_figure_name[from_figure]);
-  Field::Readable(res, from_);
+  Field::Append(res, from_);
   res->append(1, (to_figure == kEmpty) ? '-' : '*');
   // Use this if you want syntax Ra1*Qa8:
   // res->append(uncolored_figure_name[to_figure]);
-  Field::Readable(res, to_);
+  Field::Append(res, to_);
   switch (move_type_) {
     case Move::kEnPassant:
       res->append("ep");
@@ -98,38 +98,38 @@ void Move::Readable(string *res, Figure from_figure, Figure to_figure) const {
   }
 }
 
-void Move::Readable(std::string *res, const Field &chess_field) const {
-  Readable(res, chess_field.field_[from_], chess_field.field_[to_]);
+void Move::Append(std::string *res, const Field &chess_field) const {
+  Append(res, chess_field.field_[from_], chess_field.field_[to_]);
 }
 
-void MoveList::Readable(string *res, const Field &chess_field) const {
+void MoveList::Append(string *res, const Field &chess_field) const {
   for (auto m : *this) {
     if (!res->empty()) {
       res->append(1, ' ');
     }
-    res->append(m.Readable(chess_field));
+    m.Append(res, chess_field);
   }
 }
 
-void MoveList::Readable(string *res) const {
+void MoveList::Append(string *res) const {
   for (auto m : *this) {
     if (!res->empty()) {
       res->append(1, ' ');
     }
-    res->append(m.Readable());
+    m.Append(res);
   }
 }
 
-void MoveStack::Readable(string *res) const {
+void MoveStack::Append(string *res) const {
   for (auto m : *this) {
     if (!res->empty()) {
       res->append(1, ' ');
     }
-    res->append(m.Readable());
+    m.Append(res);
   }
 }
 
-void Field::Readable(std::string *result) const {
+void Field::Append(std::string *result) const {
   string columns("  ");
   for (Pos pos(0); pos < kColumns; ++pos) {
     columns.append(1, ' ');
@@ -142,7 +142,7 @@ void Field::Readable(std::string *result) const {
     row += kDown;
     Pos pos(AddDelta(kFieldStart, row));
     char letter, number;
-    Readable(&letter, &number, pos);
+    LetterNumber(&letter, &number, pos);
     result->append(1, number);
     result->append(1, ' ');
     for (Pos column(0); column < kColumns; ++column) {
@@ -155,7 +155,7 @@ void Field::Readable(std::string *result) const {
   result->append(columns);
 }
 
-void Field::Readable(char *letter, char *number, Pos pos) {
+void Field::LetterNumber(char *letter, char *number, Pos pos) {
   if (UNLIKELY((pos < kFieldStart) && (pos >= kFieldEnd))) {
     *letter = *number = '?';
     return;
@@ -171,9 +171,9 @@ void Field::Readable(char *letter, char *number, Pos pos) {
   *number = (num + '1');
 }
 
-void Field::Readable(string *letter_number, Pos pos) {
+void Field::Append(string *letter_number, Pos pos) {
   char result[3];
-  Readable(&(result[0]), &(result[1]), pos);
+  LetterNumber(&(result[0]), &(result[1]), pos);
   result[2] = '\0';
   letter_number->append(result);
 }

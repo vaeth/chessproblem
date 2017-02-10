@@ -68,8 +68,9 @@ library within a few seconds on a modern PC.
 
 The demo program is kept relatively simple:
 
-main.cc      - the main function for initializing and calling the library
-m_inttypes.h - macros for printf I/O
+main.cc     - the main function for initializing and calling the library
+formated.h  - an auxiliary class for formatting strings and I/O
+formated.cc - implementation of the above class
 
 The usage of the demo "chessproblem" is rather elementary and unix style:
 Just the data can be entered over options and arguments (or stdin).
