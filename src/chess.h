@@ -9,6 +9,7 @@
 
 #include <config.h>
 
+#include <array>
 #include <deque>
 #include <list>
 #include <string>
@@ -18,6 +19,12 @@
 
 namespace chess {
 class Field;
+
+// Use the functions from Field to convert intto/from coordinate form.
+// Google style does not recommend to use unsigned, but it is the only way to
+// get a minimal compile time check...
+typedef unsigned int Pos;
+typedef signed char PosDelta;  // Differ from Pos to get a compile time check
 
 typedef unsigned char Figure;
 static constexpr Figure
@@ -64,8 +71,8 @@ constexpr const Figure InvertColor(const Figure figure) {
 }
 
 // This is guaranteed to return 0 or 1. The argument _must_ be a plain color.
-constexpr const int Color2Index(const Figure color) {
-  return static_cast<int>(color);
+constexpr const std::array<Pos, 2>::size_type Color2Index(const Figure color) {
+  return static_cast<std::array<Pos, 2>::size_type>(color);
 }
 
 static constexpr Figure
@@ -101,12 +108,6 @@ constexpr static Figure FigureValue(const char figure) {
          ((figure == 'K') ? kKing :
          ((figure == 'P') ? kPawn : kNoFigure))))));
 }
-
-// Use the functions from Field to convert intto/from coordinate form.
-// Google style does not recommend to use unsigned, but it is the only way to
-// get a minimal compile time check...
-typedef unsigned int Pos;
-typedef signed char PosDelta;  // Differ from Pos to get a compile time check
 
 constexpr const Pos AddDelta(const Pos pos, const PosDelta delta) {
   return static_cast<const Pos>(static_cast<const int>(pos) +
@@ -669,8 +670,32 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     ClearField();
   }
 
+  // No destructor is needed, but we must take care when copying moving,
+  // because we need to fixup refs_ to point to the copied/moved iterators.
+
+  Field(const Field& f) {
+    *this = f;
+  }
+
+  Field(const Field&& f) {
+    *this = f;
+  }
+
+  Field& operator=(const Field& f);
+
+  Field& operator=(const Field&& f);
+
  private:
   typedef PosList::iterator Pointer;
+
+  // Needed only inline for the copy/move assignment operator
+  void RecreateRefs() {
+    for (auto l : pos_lists_) {
+      for (PosList::iterator it(l.begin()); it != l.end(); ++it) {
+        refs_[*it] = it;
+      }
+    }
+  }
 
   // Might leave invalid data
   void ClearField();
@@ -705,13 +730,13 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   static void GenerateTransform(MoveList *moves, Pos from, Pos to);
 
   // mutable, because functions like generator() modify it temporarily:
-  mutable Figure field_[kFieldSize];
-  Pointer refs_[kFieldSize];  // pointers to pos_lists
+  mutable std::array<Figure, kFieldSize> field_;
+  std::array<Pointer, kFieldSize> refs_;  // pointers to pos_lists_
   Figure color_;
   EnPassant ep_;
   Castling castling_;
-  PosList pos_lists_[kIndexMax + 1];
-  Pos kings_[kIndexMax + 1];
+  std::array<PosList, kIndexMax + 1> pos_lists_;
+  std::array<Pos, kIndexMax + 1> kings_;
   MoveStack move_stack_;
 };
 

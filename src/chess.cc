@@ -232,6 +232,34 @@ void Field::clear() {
   ClearStack();
 }
 
+// Copy assignment.
+Field& Field::operator=(const Field& f) {
+  field_ = f.field_;
+  color_ = f.color_;
+  ep_ = f.ep_;
+  castling_ = f.castling_;
+  pos_lists_ = f.pos_lists_;
+  kings_ = f.kings_;
+  move_stack_ = f.move_stack_;
+  RecreateRefs();
+  return *this;
+}
+
+// Move assignment.
+// The code looks exactly like the copy assignment, but the semantics differs,
+// because all assignments are actually move assignments...
+Field& Field::operator=(const Field&& f) {
+  field_ = f.field_;
+  color_ = f.color_;
+  ep_ = f.ep_;
+  castling_ = f.castling_;
+  pos_lists_ = f.pos_lists_;
+  kings_ = f.kings_;
+  move_stack_ = f.move_stack_;
+  RecreateRefs();
+  return *this;
+}
+
 void Field::PlaceFigure(Figure figure, Pos pos) {
   ASSERT((pos >= kFieldStart) && (pos < kFieldEnd));
   auto i(FigureColor(figure));

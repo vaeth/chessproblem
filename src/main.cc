@@ -56,7 +56,7 @@ static void Help() {
 "The return value is 0 if there is a unique solution\n"
 "\n"
 "Options:\n"
-"-i   Read position form standard input\n"
+"-i   Read position from standard input\n"
 "-m X Mate in X moves (2X - 1 half moves)\n"
 "-s X Selfmate in X moves (2X half moves)\n"
 "-h X Helpmate in X moves (2X half moves)\n"

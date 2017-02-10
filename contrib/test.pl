@@ -34,7 +34,8 @@ while (<DATA>) {
     s{^.*\:\s*}{};
     push(@result, $_)
   }
-  close($fh)
+  close($fh);
+  die unless(@result)
 }
 1
 __END__

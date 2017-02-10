@@ -3,6 +3,7 @@
 *chessproblem-1.1
 	Martin Väth <martin at mvath.de>:
 	- Reimplement I/O using a Format class
+	- Make Field copyable/moveable
 
 *chessproblem-1.0
 	Martin Väth <martin at mvath.de>:

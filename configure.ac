@@ -4,7 +4,7 @@
 # Copyright (c)
 #  Martin V\"ath <martin@mvath.de>
 
-AC_INIT([chessproblem], [1.0], [https://github.com/vaeth/chessproblem/issues/], [chessproblem], [https://github.com/vaeth/chessproblem/])
+AC_INIT([chessproblem], [1.1], [https://github.com/vaeth/chessproblem/issues/], [chessproblem], [https://github.com/vaeth/chessproblem/])
 AC_PREREQ([2.64])
 
 m4_ifdef([AC_CONFIG_MACRO_DIR],
