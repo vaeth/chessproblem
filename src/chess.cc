@@ -600,22 +600,30 @@ Pos Field::CastlingRook(int *in_check, Pos pos, const PosDelta dir) const {
   if (*in_check > 0) {
     return kNpos;
   }
+  // Rely on castling variable: assume that king and rook are correct.
+  // However, there must not be any figure in between:
   Pos rook_pos(LongAddDelta(pos, dir));
   if (field_[AddDelta(rook_pos, dir)] != kNoFigure) {
     return kNpos;
   }
   Figure color(color_);
+  // The king must not be threatened (in check) and neither the two next fields
   if (*in_check == 0) {
-    if ((*in_check = IsThreatened(pos, color))) {
-      return kNpos;
-    }
-  }
-  while ((pos = AddDelta(pos, dir)) != rook_pos) {
     if (IsThreatened(pos, color)) {
+      *in_check = 1;
       return kNpos;
     }
+    *in_check = -1;  // no need to test for in_check for opposite dir value
   }
-  return pos;
+  pos = AddDelta(pos, dir);
+  if (IsThreatened(pos, color)) {
+    return kNpos;
+  }
+  pos = AddDelta(pos, dir);
+  if (IsThreatened(pos, color)) {
+    return kNpos;
+  }
+  return rook_pos;
 }
 
 bool Field::IsValidMove(const Pos from, const Pos to) const {

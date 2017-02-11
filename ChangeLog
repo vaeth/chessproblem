@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.2
+	Martin Väth <martin at mvath.de>:
+	- Fix rules: A threatened field b2/b8 must not forbid long castling
+
 *chessproblem-1.1
 	Martin Väth <martin at mvath.de>:
 	- Reimplement I/O using a Format class
