@@ -9,9 +9,6 @@
 
 #include <config.h>
 
-#include <vector>
-#include <string>
-
 #include "src/m_assert.h"
 #include "src/chess.h"
 
@@ -43,7 +40,7 @@ The return value is the number of solutions found.
 
 There are also similiar abstract Progress() functions which can optionally
 be specialized to output the progress of the solver. Note that the Progress()
-function can make use of Readable() of the inherited chess::Field
+function can make use of str() of the inherited chess::Field
 (possibly framed in PushMove() and PopMove() to show the effect of the move).
 */
 

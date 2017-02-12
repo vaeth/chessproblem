@@ -16,6 +16,8 @@ int ChessProblem::Solve() {
   // Make sure to use defaults if the user of the class did not:
   set_default_color();
   default_color_ = false;
+  ASSERT(LegalValues());
+  ASSERT(LegalState());
 
   num_solutions_found_ = 0;
   remaining_half_moves_ = half_moves_;
@@ -36,7 +38,7 @@ int ChessProblem::Solve() {
       // All players "win" always so that we do not cut
       mate_value_ = nomate_value_ = nonsuccess_value_ = kWin;
   }
-  // format::Print() % Readable();
+  // format::Print() % str();
   RecursiveSolver();
   return num_solutions_found_;
 }

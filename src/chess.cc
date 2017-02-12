@@ -308,19 +308,22 @@ void Field::MoveFigure(Pos from, Pos to) {
   to_ref = from_ref;
 }
 
-bool Field::ValidatePosLists() const {
-  for (auto i : pos_lists_[Color2Index(kWhite)]) {
-    Figure figure(field_[i]);
-    if ((figure == kEmpty) || (figure == kNoFigure) ||
-      (FigureColor(figure) != kWhite)) {
-      return false;
+bool Field::LegalState() const {
+  for (Figure color(kWhite); ; color = kBlack) {
+    const PosList& l = pos_lists_[Color2Index(color)];
+    for (PosList::const_iterator it(l.begin()); it != l.end(); ++it) {
+      auto i = *it;
+      Figure figure(field_[i]);
+      if ((figure == kEmpty) || (figure == kNoFigure) ||
+        (FigureColor(figure) != color)) {
+        return false;
+      }
+      if (refs_[i] != it) {
+        return false;
+      }
     }
-  }
-  for (auto i : pos_lists_[Color2Index(kBlack)]) {
-    Figure figure(field_[i]);
-    if ((figure == kEmpty) || (figure == kNoFigure) ||
-      (FigureColor(figure) != kBlack)) {
-      return false;
+    if (color == kBlack) {
+      break;
     }
   }
   PosList::size_type count[kIndexMax + 1];

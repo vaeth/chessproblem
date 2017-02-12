@@ -25,11 +25,6 @@ using std::vector;
 
 namespace format {
 
-const FormatManip::ArgType
-  FormatManip::kNone,
-  FormatManip::kString,
-  FormatManip::kDigit;
-
 void Format::BadFormat() const {
   SayError("format: bad format specification \"%s\"") % text_;
   exit(EXIT_FAILURE);

@@ -75,7 +75,7 @@ class FormatManip {
 
  private:
   typedef unsigned char ArgType;
-  constexpr static const ArgType
+  constexpr static ArgType
     kNone   = 0x00,
     kString = 0x01,
     kDigit  = 0x02;

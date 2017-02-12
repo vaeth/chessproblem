@@ -27,7 +27,7 @@ typedef unsigned int Pos;
 typedef signed char PosDelta;  // Differ from Pos to get a compile time check
 
 typedef unsigned char Figure;
-static constexpr Figure
+constexpr static Figure
   kEmpty = 0,
   kWhite = kEmpty,
   kBlack = 1,
@@ -75,7 +75,7 @@ constexpr const std::array<Pos, 2>::size_type Color2Index(const Figure color) {
   return static_cast<std::array<Pos, 2>::size_type>(color);
 }
 
-static constexpr Figure
+constexpr static Figure
   kIndexMax = Color2Index(kWhite) + Color2Index(kBlack),
 // the colored figures
   kWhitePawn = ColoredFigure(kPawn, kWhite),
@@ -100,7 +100,7 @@ constexpr const Figure ColorValue(const char color) {
   return (((color == 'w') || (color == 'W')) ? kWhite : kBlack);
 }
 
-constexpr static Figure FigureValue(const char figure) {
+constexpr static const Figure FigureValue(const char figure) {
   return ((figure == 'N') ? kKnight :
          ((figure == 'B') ? kBishop :
          ((figure == 'R') ? kRook :
@@ -117,7 +117,7 @@ constexpr const Pos AddDelta(const Pos pos, const PosDelta delta) {
 // EnPassant is either the EnPassant position (skipped field)
 // or kNoEndPassant if none allowed.
 typedef Pos EnPassant;
-static constexpr EnPassant
+constexpr static EnPassant
   kNoEnPassant = 0,
   kUnknownEnPassant = 1;
 
@@ -125,7 +125,7 @@ typedef std::vector<EnPassant> EnPassantList;
 
 // This is a bitfield:
 typedef unsigned char Castling;
-static constexpr Castling
+constexpr static Castling
   kNoCastling = 0,
   kWhiteShortCastling = 1,
   kWhiteLongCastling = 2,
@@ -160,7 +160,7 @@ constexpr const Castling UnsetCastling(const Castling have,
   return (have & flag);
 }
 
-static constexpr Castling
+constexpr static Castling
   kNoWhiteShortCastling = NegateCastling(kWhiteShortCastling),
   kNoWhiteLongCastling = NegateCastling(kWhiteLongCastling),
   kNoBlackShortCastling = NegateCastling(kBlackShortCastling),
@@ -394,8 +394,8 @@ class Field {
   friend class Move;
 
  public:
-  static constexpr Pos kColumns = 8;
-  static constexpr Pos kRows = 8;
+  constexpr static Pos kColumns = 8;
+  constexpr static Pos kRows = 8;
 
 /*
 In the standard case (columns = rows = 8) the internal field looks like this;
@@ -417,7 +417,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
 */
 
-  static constexpr PosDelta
+  constexpr static PosDelta
     kLeft = -1,
     kRight = 1,
     kUp = kColumns + 2,
@@ -427,7 +427,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     kUpLeft = kUp + kLeft,
     kDownLeft = kDown + kLeft;
 
-  static constexpr Pos
+  constexpr static Pos
     kNpos = 0,
     kFieldSize = (kColumns + 2) * (kRows + 4),
     kFieldStart = (kColumns + 2) * 2 + 1,
@@ -450,7 +450,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     kPosBlackLongRook = kLastRow,
     kPosBlackShortRook = kLastRow + kColumns - 1;
 
-  static constexpr PosDelta
+  constexpr static PosDelta
     kWhitePawnHit1Delta = kUpLeft,
     kWhitePawnHit2Delta = kUpRight,
     kWhitePawnMoveDelta = kUp,
@@ -584,6 +584,10 @@ note that it is "on head" concerning the moves and mirrored concerning columns
       IsCastlingValid(castling_));
   }
 
+  // Return true if internal state is legal. This is mainly for debugging.
+  // Calling this is time consuming and should not be used in any loop.
+  bool LegalState() const;
+
   // Add all valid moves. If moves is nullptr, only return value is produced.
   // The return value is true if there is at least one valid move.
   bool Generator(MoveList *moves) const;
@@ -687,10 +691,12 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
  private:
   typedef PosList::iterator Pointer;
+  typedef std::array<PosList, kIndexMax + 1> PosLists;
+  typedef std::array<Pos, kIndexMax + 1> KingsPos;
 
   // Needed only inline for the copy/move assignment operator
   void RecreateRefs() {
-    for (auto l : pos_lists_) {
+    for (auto& l : pos_lists_) {
       for (PosList::iterator it(l.begin()); it != l.end(); ++it) {
         refs_[*it] = it;
       }
@@ -724,9 +730,6 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // Return true if moves is nullptr and move could be generated
   bool GenerateBlackPawn(MoveList *moves, Pos from) const;
 
-  // Only used for debugging: Check whether pos_lists_ are reasonable
-  bool ValidatePosLists() const;
-
   static void GenerateTransform(MoveList *moves, Pos from, Pos to);
 
   // mutable, because functions like generator() modify it temporarily:
@@ -735,8 +738,8 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   Figure color_;
   EnPassant ep_;
   Castling castling_;
-  std::array<PosList, kIndexMax + 1> pos_lists_;
-  std::array<Pos, kIndexMax + 1> kings_;
+  PosLists pos_lists_;
+  KingsPos kings_;
   MoveStack move_stack_;
 };
 
