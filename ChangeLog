@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.4
+	Martin Väth <martin at mvath.de>:
+	- Care about nonstandard compatibility and warnings
+
 *chessproblem-1.3
 	Martin Väth <martin at mvath.de>:
 	- Fix .gitignore

@@ -1,5 +1,44 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if __attribute__ ((const)) can be used */
+#undef HAVE_ATTRIBUTE_CONST
+
+/* [Define if __attribute__ ((deprecated("a"))) can be used] */
+#undef HAVE_ATTRIBUTE_DEPRECATED
+
+/* Define if [[fallthrough]] can be used */
+#undef HAVE_ATTRIBUTE_FALLTHROUGH
+
+/* [Define if [[maybe_unused]] can be used] */
+#undef HAVE_ATTRIBUTE_MAYBE_UNUSED
+
+/* [Define if [[nodiscard]] can be used] */
+#undef HAVE_ATTRIBUTE_NODISCARD
+
+/* Define if __attribute__ ((nonnull (list))) can be used */
+#undef HAVE_ATTRIBUTE_NONNULL
+
+/* Define if __attribute__ ((nonnull)) can be used */
+#undef HAVE_ATTRIBUTE_NONNULL_
+
+/* Define if __attribute__ ((noreturn)) can be used */
+#undef HAVE_ATTRIBUTE_NORETURN
+
+/* Define if __attribute__ ((pure)) can be used */
+#undef HAVE_ATTRIBUTE_PURE
+
+/* Define if __attribute__ ((unused)) can be used */
+#undef HAVE_ATTRIBUTE_UNUSED
+
+/* Define if __attribute__ ((warn_unused_result)) can be used */
+#undef HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
+
+/* [Define if [[deprecated]] can be used] */
+#undef HAVE_C11ATTRIBUTE_DEPRECATED
+
+/* [Define if [[noreturn]] can be used] */
+#undef HAVE_C11ATTRIBUTE_NORETURN
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

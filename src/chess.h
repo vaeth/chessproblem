@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "src/m_assert.h"
+#include "src/m_attribute.h"
 
 namespace chess {
 class Field;
@@ -27,7 +28,7 @@ typedef unsigned int Pos;
 typedef signed char PosDelta;  // Differ from Pos to get a compile time check
 
 typedef unsigned char Figure;
-constexpr static Figure
+constexpr static const Figure
   kEmpty = 0,
   kWhite = kEmpty,
   kBlack = 1,
@@ -75,7 +76,7 @@ constexpr const std::array<Pos, 2>::size_type Color2Index(const Figure color) {
   return static_cast<std::array<Pos, 2>::size_type>(color);
 }
 
-constexpr static Figure
+constexpr static const Figure
   kIndexMax = Color2Index(kWhite) + Color2Index(kBlack),
 // the colored figures
   kWhitePawn = ColoredFigure(kPawn, kWhite),
@@ -117,7 +118,7 @@ constexpr const Pos AddDelta(const Pos pos, const PosDelta delta) {
 // EnPassant is either the EnPassant position (skipped field)
 // or kNoEndPassant if none allowed.
 typedef Pos EnPassant;
-constexpr static EnPassant
+constexpr static const EnPassant
   kNoEnPassant = 0,
   kUnknownEnPassant = 1;
 
@@ -125,7 +126,7 @@ typedef std::vector<EnPassant> EnPassantList;
 
 // This is a bitfield:
 typedef unsigned char Castling;
-constexpr static Castling
+constexpr static const Castling
   kNoCastling = 0,
   kWhiteShortCastling = 1,
   kWhiteLongCastling = 2,
@@ -160,7 +161,7 @@ constexpr const Castling UnsetCastling(const Castling have,
   return (have & flag);
 }
 
-constexpr static Castling
+constexpr static const Castling
   kNoWhiteShortCastling = NegateCastling(kWhiteShortCastling),
   kNoWhiteLongCastling = NegateCastling(kWhiteLongCastling),
   kNoBlackShortCastling = NegateCastling(kBlackShortCastling),
@@ -190,74 +191,105 @@ class Move {
     move_type_(move_type), from_(from), to_(to) {
   }
 
-  // append a human readable form of the move
+  // Append a human readable form of the move
   void Append(std::string *res, const Field &chess_field) const;
 
   void Append(std::string *res, Figure from_figure, Figure to_figure) const;
 
-  // this is a poor man's version of Append (no figure name is contained)
-  void Append(std::string *res) const {
+  // This is a poor man's version of Append (no figure name is contained)
+  void AppendPoorMan(std::string *res) const {
     Append(res, kPawn, kPawn);
   }
 
-  // return a human readable form of the move
-  std::string str(const Field &chess_field) const {
+  // AppendPoorMan with the natural name, but warn if used
+  ATTRIBUTE_DEPRECATED("Move::Append(res) does not add the figure name")
+      void Append(std::string *res) const {
+    AppendPoorMan(res);
+  }
+
+  // Return a human readable form of the move
+  ATTRIBUTE_NODISCARD std::string str(const Field &chess_field) const {
     std::string r;
     Append(&r, chess_field);
     return r;
   }
 
-  std::string str(Figure from_figure, Figure to_figure) const {
+  ATTRIBUTE_NODISCARD std::string str(Figure from_figure, Figure to_figure)
+      const {
     std::string r;
     Append(&r, from_figure, to_figure);
     return r;
   }
 
-  // this is a poor man's version of str (no figure name is contained)
-  std::string str() const {
+  // This is a poor man's version of str (no figure name is contained)
+  ATTRIBUTE_NODISCARD std::string strPoorMan() const {
     return str(kPawn, kPawn);
   }
 
+  // strPoorMan with the natural name, but warn if used
+  ATTRIBUTE_DEPRECATED("Move::str() does not add the figure name")
+      ATTRIBUTE_NODISCARD std::string str() const {
+    return strPoorMan();
+  }
+
   // Convenience wrapper for str()
-  operator std::string() {
-    return str();
+  ATTRIBUTE_DEPRECATED("Move::operator string() does not add the figure name")
+      operator std::string() {
+    return strPoorMan();
   }
 };
 
+ATTRIBUTE_DEPRECATED("Output of Move does not add the figure name")
 inline static std::ostream& operator<<(std::ostream& os, const Move& m);
 inline static std::ostream& operator<<(std::ostream& os, const Move& m) {
-  os << m.str();
+  os << m.strPoorMan();
   return os;
 }
 
 class MoveList : public std::vector<Move> {
  public:
-  // append a human readable form of the list
+  // Append a human readable form of the list
   void Append(std::string *res, const Field &chess_field) const;
 
-  void Append(std::string *res) const;
+  // This is a poor man's version of Append (no figure names are contained)
+  void AppendPoorMan(std::string *res) const;
 
-  std::string str(const Field &chess_field) const {
+  // AppendPoorMan with the natural name, but warn if used
+  ATTRIBUTE_DEPRECATED("MoveList::Append(res) does not add the figure names")
+      void Append(std::string *res) const {
+      AppendPoorMan(res);
+  }
+
+  ATTRIBUTE_NODISCARD std::string str(const Field &chess_field) const {
     std::string r;
     Append(&r, chess_field);
     return r;
   }
 
-  std::string str() const {
+  // This is a poor man's version of str (no figure names are contained)
+  ATTRIBUTE_NODISCARD std::string strPoorMan() const {
     std::string r;
-    Append(&r);
+    AppendPoorMan(&r);
     return r;
   }
 
+  // strPoorMan with the natural name, but warn if used
+  ATTRIBUTE_DEPRECATED("MoveList::str() does not add the figure names")
+  ATTRIBUTE_NODISCARD std::string str() const {
+    return strPoorMan();
+  }
+
   // Convenience wrapper for str()
-  operator std::string() {
-    return str();
+  ATTRIBUTE_DEPRECATED("MoveList::operator string() does not add the "
+      "figure names") operator std::string() {
+    return strPoorMan();
   }
 };
 
+ATTRIBUTE_DEPRECATED("Output of MoveList does not add the figure names")
 inline static std::ostream& operator<<(std::ostream& os, const MoveList& l);
 inline static std::ostream& operator<<(std::ostream& os, const MoveList& l) {
-  os << l.str();
+  os << l.strPoorMan();
   return os;
 }
 
@@ -279,12 +311,12 @@ class MoveStore {
   }
 
   // return a human readable form of the move
-  std::string str() const {
+  ATTRIBUTE_NODISCARD std::string str() const {
     return move_->str(from_figure_, to_figure_);
   }
 
   // Convenience wrapper for str()
-  operator std::string() const {
+  ATTRIBUTE_NODISCARD operator std::string() const {
     return str();
   }
 };
@@ -302,7 +334,7 @@ class MoveStack : public std::deque<MoveStore> {
   void Append(std::string *res) const;
 
   // return a human readable form of the move
-  std::string str() const {
+  ATTRIBUTE_NODISCARD std::string str() const {
     std::string r;
     Append(&r);
     return r;
@@ -394,8 +426,9 @@ class Field {
   friend class Move;
 
  public:
-  constexpr static Pos kColumns = 8;
-  constexpr static Pos kRows = 8;
+  constexpr static const Pos
+    kColumns = 8,
+    kRows = 8;
 
 /*
 In the standard case (columns = rows = 8) the internal field looks like this;
@@ -417,7 +450,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
 */
 
-  constexpr static PosDelta
+  constexpr static const PosDelta
     kLeft = -1,
     kRight = 1,
     kUp = kColumns + 2,
@@ -427,7 +460,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     kUpLeft = kUp + kLeft,
     kDownLeft = kDown + kLeft;
 
-  constexpr static Pos
+  constexpr static const Pos
     kNpos = 0,
     kFieldSize = (kColumns + 2) * (kRows + 4),
     kFieldStart = (kColumns + 2) * 2 + 1,
@@ -450,13 +483,13 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     kPosBlackLongRook = kLastRow,
     kPosBlackShortRook = kLastRow + kColumns - 1;
 
-  constexpr static PosDelta
-    kWhitePawnHit1Delta = kUpLeft,
-    kWhitePawnHit2Delta = kUpRight,
-    kWhitePawnMoveDelta = kUp,
-    kBlackPawnHit1Delta = kDownLeft,
-    kBlackPawnHit2Delta = kDownRight,
-    kBlackPawnMoveDelta = kDown;
+  constexpr static const PosDelta
+    kWhitePawnHit1 = kUpLeft,
+    kWhitePawnHit2 = kUpRight,
+    kWhitePawnMove = kUp,
+    kBlackPawnHit1 = kDownLeft,
+    kBlackPawnHit2 = kDownRight,
+    kBlackPawnMove = kDown;
 
   static const PosDelta knight_deltas[8];
   static const PosDelta bishop_deltas[4];
@@ -466,19 +499,19 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   static const PosDelta black_pawn_hit_deltas[2];
 
   // For illegal arguments, the value kFieldEnd is returned
-  static Pos CalcPos(char letter, char number);
+  ATTRIBUTE_CONST static Pos CalcPos(char letter, char number);
 
   // For illegal arguments, the value kFieldEnd is returned
-  static Pos CalcPos(const char *letter_number);
+  ATTRIBUTE_PURE static Pos CalcPos(const char *letter_number);
 
   // For illegal arguments, the value kFieldEnd is returned
-  static Pos CalcPos(const std::string &letter_number);
+  ATTRIBUTE_PURE static Pos CalcPos(const std::string &letter_number);
 
   // Append a printable form of the field
   void Append(std::string *result) const;
 
   // return a printable form of the field
-  std::string str() const {
+  ATTRIBUTE_NODISCARD std::string str() const {
     std::string r;
     Append(&r);
     return r;
@@ -494,7 +527,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // Append position name in a human readable form
   static void Append(std::string *letter_number, Pos pos);
 
-  static std::string str(Pos pos) {
+  ATTRIBUTE_NODISCARD static std::string str(Pos pos) {
     std::string result;
     Append(&result, pos);
     return result;
@@ -506,7 +539,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   // Return Move in a human readable form
-  std::string str(const Move& m) const {
+  ATTRIBUTE_NODISCARD std::string str(const Move& m) const {
     return m.str(*this);
   }
 
@@ -516,7 +549,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   // Return MoveList in a human readable form
-  std::string str(const MoveList& move_list) const {
+  ATTRIBUTE_NODISCARD std::string str(const MoveList& move_list) const {
     return move_list.str(*this);
   }
 
@@ -530,11 +563,11 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
   // Add all possible ep values (except kNoEnPassand) for the position.
   // Requires that color has been set.
-  void CalcEnPassant(EnPassantList *ep_values) const;
+  ATTRIBUTE_NONNULL_ void CalcEnPassant(EnPassantList *ep_values) const;
 
   // Return all those castling value for the position wich are set in c.
   // Thus, CalcCastling(kAllCastling) returns all possible castling values.
-  Castling CalcCastling(Castling c) const;
+  ATTRIBUTE_PURE Castling CalcCastling(Castling c) const;
 
   void set_color(Figure color) {
     ASSERT(IsColor(color));
@@ -542,7 +575,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   // Return whether set_color was already called
-  bool have_color() const {
+  ATTRIBUTE_NODISCARD bool have_color() const {
     return (IsColor(color_));
   }
 
@@ -560,10 +593,10 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   // Return true if (at least) one black and white king are on the board
-  bool HaveKings() const;
+  ATTRIBUTE_NODISCARD bool HaveKings() const;
 
   // Return true if the castling value makes sense for the position
-  bool IsCastlingValid(Castling c) const {
+  ATTRIBUTE_NODISCARD bool IsCastlingValid(Castling c) const {
     return (CalcCastling(c) == c);
   }
 
@@ -572,28 +605,29 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // If opponent_test is true, check not only whether the value is valid but
   // also whether it useful, that is whether there is a pawn which could hit
   // the moved pawn.
-  bool IsEnPassantValid(EnPassant ep, bool opponent_test) const;
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE  bool IsEnPassantValid(EnPassant ep,
+      bool opponent_test) const;
 
   // Return true if set_color(), set_ep() and set_castling() have been called
-  bool HaveData() const;
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE bool HaveData() const;
 
   // Return true if all values have been set and appear to be complete/legal.
   // This is essentially a shortcut for the above validity check functions.
-  bool LegalValues() const {
+  ATTRIBUTE_NODISCARD bool LegalValues() const {
     return (HaveData() && HaveKings() && IsEnPassantValid(ep_, false) &&
       IsCastlingValid(castling_));
   }
 
   // Return true if internal state is legal. This is mainly for debugging.
   // Calling this is time consuming and should not be used in any loop.
-  bool LegalState() const;
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE bool LegalState() const;
 
   // Add all valid moves. If moves is nullptr, only return value is produced.
   // The return value is true if there is at least one valid move.
   bool Generator(MoveList *moves) const;
 
   // Do the move. The pointer must be kept until corresponding PopMove()
-  void PushMove(const Move *my_move);
+  ATTRIBUTE_NONNULL_ void PushMove(const Move *my_move);
 
   // Undo the last pushed move.
   const Move *PopMove();
@@ -604,55 +638,57 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   // Is moving party checkmate? This takes quite a while...
-  bool IsCheckMate() const {
+  ATTRIBUTE_NODISCARD bool IsCheckMate() const {
     return (IsInCheck() && !Generator(nullptr));
   }
 
-  Castling get_castling() const {
+  ATTRIBUTE_NODISCARD Castling get_castling() const {
     ASSERT(castling_ < kUnknownCastling);
     return castling_;
   }
 
-  EnPassant get_ep_() const {
+  ATTRIBUTE_NODISCARD EnPassant get_ep_() const {
     ASSERT(ep_ != kUnknownEnPassant);
     return ep_;
   }
 
-  Figure get_color() const {
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE Figure get_color() const {
     ASSERT(have_color());
     return color_;
   }
 
-  Figure GetFigure(Pos pos) const {
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE Figure GetFigure(Pos pos) const {
     ASSERT((pos >= kFieldStart) && (pos < kFieldEnd) &&
       (field_[pos] != kNoFigure));
     return field_[pos];
   }
 
-  Figure operator[](Pos pos) const {
+  ATTRIBUTE_NODISCARD Figure operator[](Pos pos) const {
     return GetFigure(pos);
   }
 
-  const PosList& GetPosList(Figure color) const {
+  ATTRIBUTE_NODISCARD const PosList& GetPosList(Figure color) const {
     ASSERT(UncoloredFigure(color) == kEmpty);
     return pos_lists_[color];
   }
 
   // Would piece of color threatened at pos?
-  bool IsThreatened(Pos pos, Figure color) const;
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE bool IsThreatened(Pos pos, Figure color)
+      const;
 
   // Would piece of moving color be threatened at pos?
-  bool IsThreatened(Pos pos) const {
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE bool IsThreatened(Pos pos) const {
     return IsThreatened(pos, color_);
   }
 
   // Is color in check?
-  bool IsInCheck(Figure color) const {
+  ATTRIBUTE_NODISCARD bool IsInCheck(Figure color) const {
     ASSERT(UncoloredFigure(color) == kEmpty);
     return IsThreatened(kings_[color], color);
   }
 
-  Pos LongAddDelta(Pos pos, PosDelta delta) const {
+  ATTRIBUTE_NODISCARD ATTRIBUTE_PURE  Pos LongAddDelta(Pos pos, PosDelta delta)
+      const {
     do {
       pos = AddDelta(pos, delta);
     } while (field_[pos] == kEmpty);
@@ -666,7 +702,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     move_stack_.clear();
   }
 
-  const MoveStack& get_move_stack() const {
+  ATTRIBUTE_NODISCARD const MoveStack& get_move_stack() const {
     return move_stack_;
   }
 
@@ -709,14 +745,16 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // in_check must be 1/-1/0 if king is in check/not in check/unknown
   // pos is position of the king, dir is +1/-1 for short/long castling.
   // Return is position of rook or kNpos if castling is not valid.
-  Pos CastlingRook(int *in_check, Pos pos, const PosDelta dir) const;
+  ATTRIBUTE_NONNULL_ Pos CastlingRook(int *in_check, Pos pos,
+      const PosDelta dir) const;
 
   // Return true if move of single figure does not leave moving party in check
-  bool IsValidMove(Pos from, Pos to) const;
+  ATTRIBUTE_NODISCARD bool IsValidMove(Pos from, Pos to) const;
 
   // Generate moves of long moving figure.
   // Return true if moves is nullptr and move could be generated
-  bool GenerateLong(MoveList *moves, Pos from, PosDelta dir) const;
+  ATTRIBUTE_NODISCARD bool GenerateLong(MoveList *moves, Pos from,
+      PosDelta dir) const;
 
   // Generate moves of short moving figure.
   // Return true if moves is nullptr and move could be generated

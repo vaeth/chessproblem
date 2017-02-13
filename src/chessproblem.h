@@ -9,8 +9,9 @@
 
 #include <config.h>
 
-#include "src/m_assert.h"
 #include "src/chess.h"
+#include "src/m_assert.h"
+#include "src/m_attribute.h"
 
 /*
 This is a recursive solver for chess problems, based on the chess library.
@@ -18,25 +19,20 @@ This is a recursive solver for chess problems, based on the chess library.
 In the current implementation, this class inherits from chess::Field,
 thus providing a simple interface for usage.
 
-Due to this inheriting, this class is currently not appropriate for
-parallel processing: For parallel processing, we would have to provide
-a separate copy if chess::Field for each thread.
-Since this would make the interface more complicated (or requires to write a
-lot of wrappers to keep the interface), this is currently not implemented:
-
-I wanted to have a running project within 1-2 days, and for my purposes
-the current version is fast enough anyway: No need to bug more simultaneous
-processor power.
+The current version of the solver runs only a single threaded. There is a
+multithreaded version of the solver in preparation which will have a slightly
+different interface concerning I/O:
 
 This class intentionally contains no I/O. All I/O (if at all) happens
 over a virtual Output() function. To implement this function, just inherit
 from the ChessProblem class and override the Output() function.
+(In the multithreaded version, the Output function must not use the
+inherited chess::Field but will get it as a separate pointer.)
 
 The Output() function is called for any found solution; if its return value
 is false, the solver stops looking for further solutions.
 The Output() function has access to the current stack of the chess library,
 so it is up to this function to interpret that stack correspondingly.
-The return value is the number of solutions found.
 
 There are also similiar abstract Progress() functions which can optionally
 be specialized to output the progress of the solver. Note that the Progress()
@@ -52,7 +48,7 @@ class ChessProblem : public chess::Field {
   // For HelpMate the full path is on the stack when Output() is called;
   // for Mate and SelfMate only the first move is on the stack.
   // The functions is non-const so that PushMove() and PopMove() can be used.
-  virtual bool Output() {
+  ATTRIBUTE_NODISCARD virtual bool Output() {
     return true;
   }
 
@@ -60,20 +56,21 @@ class ChessProblem : public chess::Field {
   // before we attack the specified list of moves.
   // Level = 0 means that this is the list of the first move.
   // The functions are non-const so that PushMove() and PopMove() can be used.
-  virtual void Progress([[maybe_unused]] int level,
-    [[maybe_unused]] const chess::MoveList& moves) {
+  virtual void Progress(ATTRIBUTE_UNUSED int level,
+    ATTRIBUTE_UNUSED const chess::MoveList& moves) {
+    UNUSED(level) UNUSED(moves)
   }
 
   // If the progress value is true, this function is called
   // before we attempt the move specified as parameter,
   // Level = 0 means that this is from the top-level list of moves.
   // The functions are non-const so that PushMove() and PopMove() can be used.
-  virtual void Progress([[maybe_unused]] int level,
-    [[maybe_unused]] const chess::Move& my_move) {
+  virtual void Progress(ATTRIBUTE_UNUSED int level,
+    ATTRIBUTE_UNUSED const chess::Move& my_move) {
+    UNUSED(level) UNUSED(my_move)
   }
 
  public:
-  // Set this to true if the Progress() functions should be called
   enum Mode { kUnknown, kMate, kSelfMate, kHelpMate };
 
   ChessProblem() :
@@ -108,11 +105,11 @@ class ChessProblem : public chess::Field {
     set_default_color();
   }
 
-  Mode get_mode() const {
+  ATTRIBUTE_NODISCARD Mode get_mode() const {
     return mode_;
   }
 
-  int get_half_moves() const {
+  ATTRIBUTE_NODISCARD int get_half_moves() const {
     return half_moves_;
   }
 
@@ -128,6 +125,8 @@ class ChessProblem : public chess::Field {
     default_color_ = false;
   }
 
+  // This is the main function which should be called when all is set up.
+  // The return value is the number of solutions found.
   int Solve();
 
  protected:

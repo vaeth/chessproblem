@@ -17,12 +17,13 @@
 #include "src/chess.h"
 #include "src/chessproblem.h"
 #include "src/formated.h"
+#include "src/m_attribute.h"
 
 using std::string;
 using std::vector;
 
 class ChessProblemDemo : public ChessProblem {
-  bool Output() override;
+  ATTRIBUTE_NODISCARD bool Output() override;
   void Progress(int level, const chess::MoveList& moves) override;
   void Progress(int level, const chess::Move& my_move) override;
 
@@ -36,10 +37,12 @@ class ChessProblemDemo : public ChessProblem {
 };
 
 static void Help();
-static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
-    const string &str);
-static int CheckNum(const char *num, int min_value, char c);
-static void SplitString(vector<string> *res, const string& str);
+ATTRIBUTE_NONNULL_ static void PlaceFigures(ChessProblem *chessproblem,
+    chess::Figure color, const string &str);
+ATTRIBUTE_NONNULL_ static int CheckNum(const char *num,
+    int min_value, char c);
+ATTRIBUTE_NONNULL_ static void SplitString(vector<string> *res,
+    const string& str);
 
 static void Help() {
   format::Say("Usage: chessproblem [options] white-pieces black-pieces\n"

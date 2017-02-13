@@ -4,7 +4,7 @@
 # Copyright (c)
 #  Martin V\"ath <martin@mvath.de>
 
-AC_INIT([chessproblem], [1.3], [https://github.com/vaeth/chessproblem/issues/], [chessproblem], [https://github.com/vaeth/chessproblem/])
+AC_INIT([chessproblem], [1.4], [https://github.com/vaeth/chessproblem/issues/], [chessproblem], [https://github.com/vaeth/chessproblem/])
 AC_PREREQ([2.64])
 
 m4_ifdef([AC_CONFIG_MACRO_DIR],
@@ -147,11 +147,10 @@ AS_IF([$new_dialect],
 		-std=gnu++11
 		-std=c++11
 "])])
-AS_IF([$new_dialect],
-	[AS_CASE([" $CXXFLAGS $my_cxxadd"],
-		[*" -std="*], [],
-		[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_LINK],
-			[$try_dialect], [$my_cxxfatal], [], [break])])])
+AS_CASE([" $CXXFLAGS $my_cxxadd"],
+	[*" -std="*], [],
+	[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_LINK],
+		[$try_dialect], [$my_cxxfatal], [], [break])])
 AS_VAR_COPY([my_cxxdialect], [my_cxxadd])
 
 AS_IF([$debugging],
@@ -336,6 +335,11 @@ AS_IF([$warnings],
 			-Wsign-conversion \
 			-Wold-style-cast \
 			-Wmissing-noreturn \
+			-Wsuggest-attribute=pure \
+			-Wsuggest-attribute=const \
+			-Wsuggest-attribute=noreturn \
+			-Wunreachable-code \
+			-Waggregate-return \
 		], [$my_cxxfatal], [], [:])
 	MV_ADDFLAGS([my_ldadd], [LDFLAGS], [MV_RUN_IFELSE_FALSE], [ \
 			-Wl,-z,defs \
@@ -344,10 +348,6 @@ AS_IF([$warnings],
 			-Wl,--no-undefined-version \
 			$warn_common \
 		], [$my_cxxfatal], [], [:])])
-dnl We do not use:
-dnl			-Wsuggest-attribute=pure \
-dnl			-Wsuggest-attribute=const \
-dnl			-Wsuggest-attribute=noreturn \
 dnl Not needed anymore with current clang:
 dnl			-Wno-unknown-warning-option \
 dnl Output is too confusing:
@@ -369,8 +369,6 @@ dnl			-Wconversion \
 dnl			-Wswitch-enum \
 dnl			-Wunsafe-loop-optimizations \
 dnl			-Wpadded \
-dnl			-Wunreachable-code \
-dnl			-Waggregate-return \
 dnl			-Winline \
 dnl			-Weffc++ \
 AS_IF([$debugging],
@@ -418,6 +416,284 @@ AS_VAR_COPY([my_ldflags], [LDFLAGS])
 # Provide external tools
 AC_PROG_MKDIR_P()
 dnl  AC_PROG_SED()
+
+# The attribute tests are special: They should even break on warnings:
+AS_VAR_COPY([CXXFLAGS], [oricxxflags])
+AS_VAR_COPY([LDFLAGS], [orildflags])
+MV_APPEND([CXXFLAGS], [$my_cxxdialect])
+MV_APPEND([CXXFLAGS], [$my_cxxfatal])
+MV_APPEND([LDFLAGS], [$my_ldfatal])
+
+# We even switch on explicitly -Wattribute although this should be default:
+MV_ADDFLAGS([CXXFLAGS], [CXXFLAGS], [AC_COMPILE_IFELSE], [ \
+		-Wattributes \
+	])
+
+# Check if [[maybe_deprecated]] works
+AC_MSG_CHECKING([[whether [[deprecated]] can be used]])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+[[deprecated("a reason")]] void a();
+void a() {
+}
+		]], [[
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([c11attr_deprecated], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([c11attr_deprecated], [false])])
+AS_IF([$c11attr_deprecated],
+	[AC_DEFINE([HAVE_C11ATTRIBUTE_DEPRECATED],
+		[1],
+		[[Define if [[deprecated]] can be used]])])
+
+# Check if __attribute__ ((deprecated)) works
+AC_MSG_CHECKING([whether __attribute__ ((deprecated)) can be used])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+__attribute__ ((deprecated("a reason"))) void a();
+void a() {
+}
+		]], [[
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_deprecated], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_deprecated], [false])])
+AS_IF([$attr_deprecated],
+	[AC_DEFINE([HAVE_ATTRIBUTE_DEPRECATED],
+		[1],
+		[[Define if __attribute__ ((deprecated("a"))) can be used]])])
+
+# Check if [[maybe_unused]] works
+AC_MSG_CHECKING([[whether [[maybe_unused]] can be used]])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+static int dummy(int i);
+static int
+dummy([[maybe_unused]] int i)
+{ return 0; }
+		]], [[
+return dummy(1);
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_maybe_unused], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_maybe_unused], [false])])
+AS_IF([$attr_maybe_unused],
+	[AC_DEFINE([HAVE_ATTRIBUTE_MAYBE_UNUSED],
+		[1],
+		[[Define if [[maybe_unused]] can be used]])])
+
+# Check if __attribute__ ((unused)) works
+AC_MSG_CHECKING([whether __attribute__ ((unused)) can be used])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+static int dummy(int i);
+static int
+dummy(__attribute__ ((unused)) int i)
+{ return 0; }
+		]], [[
+return dummy(1);
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_unused], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_unused], [false])])
+AS_IF([$attr_unused],
+	[AC_DEFINE([HAVE_ATTRIBUTE_UNUSED],
+		[1],
+		[Define if __attribute__ ((unused)) can be used])])
+
+# Check if [[noreturn]] works
+AC_MSG_CHECKING([[whether [[noreturn]] can be used]])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <cstdlib>
+[[noreturn]] static void dummy();
+static void
+dummy()
+{ exit(0); }
+		]], [[
+dummy();
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([c11attr_noreturn], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([c11attr_noreturn], [false])])
+AS_IF([$c11attr_noreturn],
+	[AC_DEFINE([HAVE_C11ATTRIBUTE_NORETURN],
+		[1],
+		[[Define if [[noreturn]] can be used]])])
+
+# Check if __attribute__ ((noreturn)) works
+AC_MSG_CHECKING([whether __attribute__ ((noreturn)) can be used])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <cstdlib>
+__attribute__ ((noreturn)) static void dummy();
+static void
+dummy()
+{ exit(0); }
+		]], [[
+dummy();
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_noreturn], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_noreturn], [false])])
+AS_IF([$attr_noreturn],
+	[AC_DEFINE([HAVE_ATTRIBUTE_NORETURN],
+		[1],
+		[Define if __attribute__ ((noreturn)) can be used])])
+
+# Check if [[nodiscard]] works
+AC_MSG_CHECKING([[whether [[nodiscard]] can be used]])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+[[nodiscard]] static int dummy();
+static int dummy() { return 0; }
+		]], [[
+return dummy();
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([c11attr_nodiscard], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([c11attr_nodiscard], [false])])
+AS_IF([$c11attr_nodiscard],
+	[AC_DEFINE([HAVE_ATTRIBUTE_NODISCARD],
+		[1],
+		[[Define if [[nodiscard]] can be used]])])
+
+# Check if __attribute__ ((warn_unused_result)) works
+AC_MSG_CHECKING([whether __attribute__ ((warn_unused_result)) can be used])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+__attribute__ ((warn_unused_result)) static int dummy();
+static int dummy() { return 0; }
+		]], [[
+return dummy();
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_warn_unused_result], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_warn_unused_result], [false])])
+AS_IF([$attr_warn_unused_result],
+	[AC_DEFINE([HAVE_ATTRIBUTE_WARN_UNUSED_RESULT],
+		[1],
+		[Define if __attribute__ ((warn_unused_result)) can be used])])
+
+# Check if [[fallthrough]] works
+AC_MSG_CHECKING([[whether [[fallthrough]] can be used]])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+		]], [[
+int i = 0;
+switch(i) {
+	case 0:
+		--i;
+		[[fallthrough]];
+	default:
+		return i + 1;
+}
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_fallthrough], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_fallthrough], [false])])
+AS_IF([$attr_fallthrough],
+	[AC_DEFINE([HAVE_ATTRIBUTE_FALLTHROUGH],
+		[1],
+		[Define if [[fallthrough]] can be used])])
+
+# Check if __attribute__ ((const)) works
+AC_MSG_CHECKING([whether __attribute__ ((const)) can be used])
+MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+class b {
+public:
+	static int c(int i) __attribute__ ((const)) { return i; }
+};
+int a(int i) __attribute__ ((const));
+int a(int i) { b x; return x.c(i); }
+		]], [[
+return !((a(4) == 4) && (a(5) == 5));
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_const], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_const], [false])])
+AS_IF([$attr_const],
+	[AC_DEFINE([HAVE_ATTRIBUTE_CONST],
+		[1],
+		[Define if __attribute__ ((const)) can be used])])
+
+# Check if __attribute__ ((pure)) works
+AC_MSG_CHECKING([whether __attribute__ ((pure)) can be used])
+MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+class b {
+public:
+	static int c(int *i) __attribute__ ((pure)) { return *i; }
+};
+__attribute__ ((pure)) int a(int i);
+int a(int i) { b x; return x.c(&i); }
+		]], [[
+return !((a(4) == 4) && (a(5) == 5));
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_pure], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_pure], [false])])
+AS_IF([$attr_pure],
+	[AC_DEFINE([HAVE_ATTRIBUTE_PURE],
+		[1],
+		[Define if __attribute__ ((pure)) can be used])])
+
+# Check if __attribute__ ((nonnull)) works
+AC_MSG_CHECKING([whether __attribute__ ((nonnull)) can be used])
+MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+class b {
+public:
+	__attribute__ ((nonnull)) int c(int *i) { return *i; }
+};
+int a(int *i) __attribute__ ((nonnull));
+int a(int *i) { b x; return x.c(i); }
+		]], [[
+int i = 4, j = 5;
+return !((a(&i) == 4) && (a(&j) == 5));
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_nonnull_], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_nonnull_], [false])])
+AS_IF([$attr_nonnull_],
+	[AC_DEFINE([HAVE_ATTRIBUTE_NONNULL_],
+		[1],
+		[Define if __attribute__ ((nonnull)) can be used])])
+
+# Check if __attribute__ ((nonnull (x, y))) works
+AC_MSG_CHECKING([whether __attribute__ ((nonnull (x, y))) can be used])
+MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+class b {
+public:
+	__attribute__ ((nonnull (1, 3))) static int c(int *i, int *j, int *k) {
+		return (j ? ((*i) - (*k)) : ((*i) + (*k)));
+	}
+	__attribute__ ((nonnull (2, 4))) int d(int *i, int *j, int *k) {
+		return c(i,j,k);
+	}
+};
+__attribute__ ((nonnull (1, 3))) int a(int *i, int *j, int *k);
+int a(int *i, int *j, int *k) {
+	b x; return x.d(i, j, k) + x.d(i, 0, k);
+}
+		]], [[
+int i = 1;
+b x;
+return !((x.d(&i, 0, &i) == 2) && (x.d(&i, 0, &i) == 2) && (a(&i, 0, &i) == 4));
+		]])],
+		[MV_MSG_RESULT([yes])
+		AS_VAR_SET([attr_nonnull], [:])],
+		[MV_MSG_RESULT([no])
+		AS_VAR_SET([attr_nonnull], [false])])
+AS_IF([$attr_nonnull],
+	[AC_DEFINE([HAVE_ATTRIBUTE_NONNULL],
+		[1],
+		[Define if __attribute__ ((nonnull (list))) can be used])])
+
+# reset the CXXFLAGS, LDFLAGS for the normal tests
+AS_VAR_COPY([CXXFLAGS], [my_cxxflags])
+AS_VAR_COPY([LDFLAGS], [my_ldflags])
 
 # Check if __builtin_expect works
 AC_MSG_CHECKING([whether __builtin_expect can be used])

@@ -40,10 +40,12 @@ The chess library consists of the files:
 
 chess.h    - the main header which also documents how the chess library is used
 chess.cc   - the implementation of the chess library
+m_assert.h - auxiliary macros to check ASSERT(...) (costs time) on some wrong
+             usages of the library.
+m_attribute.h - auxiliary macros for compiler specific attributes to
+             suppress/emit warnings or speed up the library
 m_likely.h - auxiliary compiler-dependent macros LIKELY and UNLIKELY for tests
              which might speed up the library
-m_assert.h - auxiliary macros to check ASSERT(...) (cost time) on some wrong
-             usages of the library.
 
 The library is written in such a way that it can easily be adapted for
 different field sizes than 8x8.
@@ -57,14 +59,8 @@ It is a general recursive solver for chess problems.
 There is no I/O: the output happens only over a virtual Output() function
 which has to be overridden if output is desired.
 
-When you run it, you might note that only one processor is used.
-Indeed, the current implementatation is single-threaded: My main intention
-was to get everything running within 1-2 days of work... a multi-threaded
-implementation of the chessproblem library would require considerably much
-work (see the notes in chessproblem.h).
-For my purpose the library is fast enough anyway: I never considered
-harder problems than mate in 5 moves, and these are usually solved by the
-library within a few seconds on a modern PC.
+Currently, only a single thread is used. There is a multithreaded version in
+preparation which will have a slightly different API concerning Output().
 
 The demo program is kept relatively simple:
 

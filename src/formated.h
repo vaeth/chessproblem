@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "src/m_attribute.h"
 #include "src/m_likely.h"
 
 #ifndef NDEBUG
@@ -75,7 +76,7 @@ class FormatManip {
 
  private:
   typedef unsigned char ArgType;
-  constexpr static ArgType
+  constexpr static const ArgType
     kNone   = 0x00,
     kString = 0x01,
     kDigit  = 0x02;
@@ -116,10 +117,10 @@ class Format {
   std::string text_;
   std::vector<FormatManip> manip_;
 
-  [[noreturn]] void BadFormat() const;
+  ATTRIBUTE_NORETURN void BadFormat() const;
 #ifdef FORMAT_DEBUG
-  [[noreturn]] void TooFewArguments() const;
-  [[noreturn]] void TooManyArguments() const;
+  ATTRIBUTE_NORETURN void TooFewArguments() const;
+  ATTRIBUTE_NORETURN void TooManyArguments() const;
 #endif
 
   // Write size_type or "<string::npos>" to stream
@@ -150,7 +151,8 @@ class Format {
     Init();
   }
 
-  Format(FILE *stream, const char *format, bool newline, bool flush) :
+  ATTRIBUTE_NONNULL((3)) Format(FILE *stream, const char *format, bool newline,
+      bool flush) :
     newline_(newline), flush_(flush), output_(stream), text_(format) {
     Init();
   }
@@ -166,7 +168,8 @@ class Format {
     Init();
   }
 
-  Format(FILE *stream, const char *format, bool newline) :
+  ATTRIBUTE_NONNULL((3)) Format(FILE *stream, const char *format,
+      bool newline) :
     newline_(newline), flush_(false), output_(stream), text_(format) {
     Init();
   }
@@ -198,7 +201,7 @@ class Format {
     Init();
   }
 
-  Format(const char *format, bool newline) :
+  ATTRIBUTE_NONNULL_ Format(const char *format, bool newline) :
     newline_(newline), output_(nullptr), text_(format) {
     Init();
   }
@@ -213,7 +216,7 @@ class Format {
     Init();
   }
 
-  explicit Format(const char *format) :
+  ATTRIBUTE_NONNULL_ explicit Format(const char *format) :
     newline_(false), output_(nullptr), text_(format) {
     Init();
   }
@@ -314,7 +317,7 @@ class Print : public Format {
     Format(stdout, format, false, flush) {
   }
 
-  Print(const char *format, bool flush) :
+  ATTRIBUTE_NONNULL_ Print(const char *format, bool flush) :
     Format(stdout, format, false, flush) {
   }
 
@@ -324,7 +327,8 @@ class Print : public Format {
   explicit Print(const std::string& format) : Format(stdout, format) {
   }
 
-  explicit Print(const char *format) : Format(stdout, format) {
+  ATTRIBUTE_NONNULL_ explicit Print(const char *format) :
+    Format(stdout, format) {
   }
 
   explicit Print(char format) : Format(stdout, format) {
@@ -362,7 +366,8 @@ class PrintError : public Format {
   explicit PrintError(const std::string& format) : Format(stderr, format) {
   }
 
-  explicit PrintError(const char *format) : Format(stderr, format) {
+  ATTRIBUTE_NONNULL_ explicit PrintError(const char *format) :
+    Format(stderr, format) {
   }
 
   explicit PrintError(char format) : Format(stderr, format) {
@@ -400,7 +405,8 @@ class Say : public Format {
   explicit Say(const std::string& format) : Format(stdout, format, true) {
   }
 
-  explicit Say(const char *format) : Format(stdout, format, true) {
+  ATTRIBUTE_NONNULL_ explicit Say(const char *format) :
+    Format(stdout, format, true) {
   }
 
   explicit Say(char format) : Format(stdout, format, true) {
@@ -439,7 +445,8 @@ class SayError : public Format {
     Format(stderr, format, true, true) {
   }
 
-  explicit SayError(const char *format) : Format(stderr, format, true, true) {
+  ATTRIBUTE_NONNULL_ explicit SayError(const char *format) :
+    Format(stderr, format, true, true) {
   }
 
   explicit SayError(char format) : Format(stderr, format, true, true) {

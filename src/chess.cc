@@ -10,6 +10,7 @@
 #include <string>
 
 #include "src/m_assert.h"
+#include "src/m_attribute.h"
 #include "src/m_likely.h"
 
 using std::string;
@@ -30,6 +31,43 @@ const char *color_name[] = {
   "white", "black"
 };
 
+const Pos
+  Field::kColumns,
+  Field::kRows,
+  Field::kNpos,
+  Field::kFieldSize,
+  Field::kFieldStart,
+  Field::kLastRow,
+  Field::kFieldEnd,
+  Field::kEndRow2,
+  Field::kStartRow7,
+  Field::kStartRow3,
+  Field::kEndRow3,
+  Field::kStartRow6,
+  Field::kEndRow6,
+  Field::kPosWhiteKing,
+  Field::kPosWhiteLongRook,
+  Field::kPosWhiteShortRook,
+  Field::kPosBlackKing,
+  Field::kPosBlackLongRook,
+  Field::kPosBlackShortRook;
+
+const PosDelta
+  Field::kLeft,
+  Field::kRight,
+  Field::kUp,
+  Field::kDown,
+  Field::kUpRight,
+  Field::kDownRight,
+  Field::kUpLeft,
+  Field::kDownLeft,
+  Field::kWhitePawnHit1,
+  Field::kWhitePawnHit2,
+  Field::kWhitePawnMove,
+  Field::kBlackPawnHit1,
+  Field::kBlackPawnHit2,
+  Field::kBlackPawnMove;
+
 const PosDelta Field::bishop_deltas[] = {
   kUpLeft, kUpRight, kDownLeft, kDownRight
 };
@@ -49,13 +87,13 @@ const PosDelta Field::knight_deltas[] = {
 };
 
 const PosDelta Field::white_pawn_hit_deltas[] = {
-  kWhitePawnHit1Delta,
-  kWhitePawnHit2Delta
+  kWhitePawnHit1,
+  kWhitePawnHit2
 };
 
 const PosDelta Field::black_pawn_hit_deltas[] = {
-  kBlackPawnHit1Delta,
-  kBlackPawnHit2Delta
+  kBlackPawnHit1,
+  kBlackPawnHit2
 };
 
 void Move::Append(string *res, Figure from_figure, Figure to_figure) const {
@@ -111,12 +149,12 @@ void MoveList::Append(string *res, const Field &chess_field) const {
   }
 }
 
-void MoveList::Append(string *res) const {
+void MoveList::AppendPoorMan(string *res) const {
   for (auto m : *this) {
     if (!res->empty()) {
       res->append(1, ' ');
     }
-    m.Append(res);
+    m.AppendPoorMan(res);
   }
 }
 
@@ -133,7 +171,7 @@ void Field::Append(std::string *result) const {
   string columns("  ");
   for (Pos pos(0); pos < kColumns; ++pos) {
     columns.append(1, ' ');
-    columns.append(1, 'a' + pos);
+    columns.append(1, 'a' + static_cast<char>(pos));
   }
   columns.append("  \n");
   result->append(columns);
@@ -167,8 +205,8 @@ void Field::LetterNumber(char *letter, char *number, Pos pos) {
     *letter = *number = '?';
     return;
   }
-  *letter = (pos + 'a');
-  *number = (num + '1');
+  *letter = (static_cast<char>(pos) + 'a');
+  *number = (static_cast<char>(num) + '1');
 }
 
 void Field::Append(string *letter_number, Pos pos) {
@@ -361,21 +399,21 @@ bool Field::IsEnPassantValid(EnPassant ep, bool opponent_test) const {
   }
   if (color_ == kWhite) {
     if ((ep >= kStartRow6) && (ep < kEndRow6) &&
-        (field_[AddDelta(ep, kBlackPawnMoveDelta)] == kBlackPawn) &&
+        (field_[AddDelta(ep, kBlackPawnMove)] == kBlackPawn) &&
         (field_[ep] == kEmpty) &&
-        (field_[AddDelta(ep, kWhitePawnMoveDelta)] == kEmpty) && (
+        (field_[AddDelta(ep, kWhitePawnMove)] == kEmpty) && (
           (!opponent_test) ||
-          (field_[AddDelta(ep, kBlackPawnHit1Delta)] == kWhitePawn) ||
-          (field_[AddDelta(ep, kBlackPawnHit2Delta)] == kWhitePawn))) {
+          (field_[AddDelta(ep, kBlackPawnHit1)] == kWhitePawn) ||
+          (field_[AddDelta(ep, kBlackPawnHit2)] == kWhitePawn))) {
         return true;
     }
   } else if ((ep >= kStartRow3) && (ep < kEndRow3) &&
-        (field_[AddDelta(ep, kWhitePawnMoveDelta)] == kWhitePawn) &&
+        (field_[AddDelta(ep, kWhitePawnMove)] == kWhitePawn) &&
         (field_[ep] == kEmpty) &&
-        (field_[AddDelta(ep, kBlackPawnMoveDelta)] == kEmpty) && (
+        (field_[AddDelta(ep, kBlackPawnMove)] == kEmpty) && (
           (!opponent_test) ||
-          (field_[AddDelta(ep, kWhitePawnHit1Delta)] == kBlackPawn) ||
-          (field_[AddDelta(ep, kWhitePawnHit2Delta)] == kBlackPawn))) {
+          (field_[AddDelta(ep, kWhitePawnHit1)] == kBlackPawn) ||
+          (field_[AddDelta(ep, kWhitePawnHit2)] == kBlackPawn))) {
         return true;
   }
   return false;
@@ -431,13 +469,13 @@ void Field::PushMove(const Move *my_move) {
   switch (move_type) {
     case Move::kEnPassant:
       RemoveFigure(AddDelta(to,
-        ((color == kWhite) ? kBlackPawnMoveDelta : kWhitePawnMoveDelta)));
+        ((color == kWhite) ? kBlackPawnMove : kWhitePawnMove)));
       MoveFigure(from, to);
       break;
     case Move::kDouble:
       MoveFigure(from, to);
       ep_ = AddDelta(to,
-        (color == kWhite) ? kBlackPawnMoveDelta : kWhitePawnMoveDelta);
+        (color == kWhite) ? kBlackPawnMove : kWhitePawnMove);
       break;
     case Move::kQueen:
       MoveFigure(from, to);
@@ -521,9 +559,9 @@ const Move *Field::PopMove() {
     case Move::kEnPassant:
       MoveFigure(to, from);
       if (color == kWhite) {
-        PlaceFigure(kBlackPawn, AddDelta(to, kBlackPawnMoveDelta));
+        PlaceFigure(kBlackPawn, AddDelta(to, kBlackPawnMove));
       } else {
-        PlaceFigure(kWhitePawn, AddDelta(to, kWhitePawnMoveDelta));
+        PlaceFigure(kWhitePawn, AddDelta(to, kWhitePawnMove));
       }
       break;
     case Move::kShortCastling:
@@ -539,7 +577,7 @@ const Move *Field::PopMove() {
     case Move::kRook:
     case Move::kBishop:
       field_[to] = ColoredFigure(kPawn, color);
-      [[fallthrough]];
+      ATTRIBUTE_FALLTHROUGH
     default:
     // case Move::kNormal:
     // case Move::kDouble:
@@ -586,13 +624,13 @@ bool Field::IsThreatened(Pos pos, Figure color) const {
     }
   }
   if (color == kWhite) {
-    if ((field_[AddDelta(pos, kWhitePawnHit1Delta)] == kBlackPawn) ||
-        (field_[AddDelta(pos, kWhitePawnHit2Delta)] == kBlackPawn)) {
+    if ((field_[AddDelta(pos, kWhitePawnHit1)] == kBlackPawn) ||
+        (field_[AddDelta(pos, kWhitePawnHit2)] == kBlackPawn)) {
       return true;
     }
   } else {
-    if ((field_[AddDelta(pos, kBlackPawnHit1Delta)] == kWhitePawn) ||
-        (field_[AddDelta(pos, kBlackPawnHit2Delta)] == kWhitePawn)) {
+    if ((field_[AddDelta(pos, kBlackPawnHit1)] == kWhitePawn) ||
+        (field_[AddDelta(pos, kBlackPawnHit2)] == kWhitePawn)) {
       return true;
     }
   }
@@ -691,7 +729,7 @@ void Field::GenerateTransform(MoveList *moves, Pos from, Pos to) {
 }
 
 bool Field::GenerateWhitePawn(MoveList *moves, Pos from) const {
-  Pos to(AddDelta(from, kWhitePawnMoveDelta));
+  Pos to(AddDelta(from, kWhitePawnMove));
   if (field_[to] == kEmpty) {
     if (LIKELY(IsValidMove(from, to))) {
       if (moves == nullptr) {
@@ -703,7 +741,7 @@ bool Field::GenerateWhitePawn(MoveList *moves, Pos from) const {
         GenerateTransform(moves, from, to);
       }
       if (UNLIKELY(from <= kEndRow2)) {
-        to = AddDelta(to, kWhitePawnMoveDelta);
+        to = AddDelta(to, kWhitePawnMove);
         if ((field_[to] == kEmpty) && LIKELY(IsValidMove(from, to))) {
           moves->emplace_back(Move::kDouble, from, to);
         }
@@ -713,7 +751,7 @@ bool Field::GenerateWhitePawn(MoveList *moves, Pos from) const {
   for (auto delta : white_pawn_hit_deltas) {
     to = AddDelta(from, delta);
     if (UNLIKELY(to == ep_)) {
-      Figure &pawn = field_[AddDelta(to, kBlackPawnMoveDelta)];
+      Figure &pawn = field_[AddDelta(to, kBlackPawnMove)];
       pawn = kEmpty;
       bool is_valid(IsValidMove(from, to));
       pawn = kBlackPawn;
@@ -743,7 +781,7 @@ bool Field::GenerateWhitePawn(MoveList *moves, Pos from) const {
 }
 
 bool Field::GenerateBlackPawn(MoveList *moves, Pos from) const {
-  Pos to(AddDelta(from, kBlackPawnMoveDelta));
+  Pos to(AddDelta(from, kBlackPawnMove));
   if (field_[to] == kEmpty) {
     if (LIKELY(IsValidMove(from, to))) {
       if (moves == nullptr) {
@@ -755,7 +793,7 @@ bool Field::GenerateBlackPawn(MoveList *moves, Pos from) const {
         GenerateTransform(moves, from, to);
       }
       if (UNLIKELY(from >= kStartRow7)) {
-        to = AddDelta(to, kBlackPawnMoveDelta);
+        to = AddDelta(to, kBlackPawnMove);
         if ((field_[to] == kEmpty) && LIKELY(IsValidMove(from, to))) {
           moves->emplace_back(Move::kDouble, from, to);
         }
@@ -765,7 +803,7 @@ bool Field::GenerateBlackPawn(MoveList *moves, Pos from) const {
   for (auto delta : black_pawn_hit_deltas) {
     to = AddDelta(from, delta);
     if (UNLIKELY(to == ep_)) {
-      Figure &pawn = field_[AddDelta(to, kWhitePawnMoveDelta)];
+      Figure &pawn = field_[AddDelta(to, kWhitePawnMove)];
       pawn = kEmpty;
       bool is_valid(IsValidMove(from, to));
       pawn = kWhitePawn;
