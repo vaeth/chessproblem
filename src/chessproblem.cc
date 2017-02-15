@@ -90,19 +90,15 @@ ChessProblem::Result ChessProblem::RecursiveSolver() {
   // (This is not necessary when returning due to Output() cancelation...)
   --remaining_half_moves_;
   for (chess::MoveList::const_iterator it(moves.begin());
-    it != moves.end(); PopMove(), ++it) {
+    it != moves.end(); ++it) {
     if (UNLIKELY(!Progress(half_moves_minus_one_ - remaining_half_moves_,
       *it))) {
       return kCancel;
     }
     PushMove(&(*it));
     int opponent(RecursiveSolver());
-    // Normally, we should PopMove() here, but we must postpone for Output().
-    // So we must not forget to PopMove() at every exit of this block.
-    // We do this in the "for" clause above, but we must take care of this
-    // in "break" or "return" statements...
+    chess::PushGuard push_guard(this);  // Postpone PopMove() to after Output
     if (UNLIKELY(opponent == kCancel)) {
-      PopMove();
       return kCancel;
     }
     if (opponent == kWin) {
@@ -113,12 +109,10 @@ ChessProblem::Result ChessProblem::RecursiveSolver() {
     // (except when in the top level so that we find cooks).
     if (LIKELY(remaining_half_moves_ != half_moves_minus_one_)) {
       ++remaining_half_moves_;
-      PopMove();
       return kWin;
     }
     ++num_solutions_found_;
     if (UNLIKELY(!Output())) {
-      PopMove();
       return kCancel;
     }
   }
