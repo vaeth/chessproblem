@@ -1,12 +1,18 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.5
+	Martin Väth <martin at mvath.de>:
+	- Rename options to free -h for the standard "help" meaning
+	- Provide PushGuard and PushGuardDisarmable
+	- ChessProblem::Progress can now cancel by returning false
+	- Fix .gitignore
+
 *chessproblem-1.4
 	Martin Väth <martin at mvath.de>:
 	- Care about nonstandard compatibility and warnings
 
 *chessproblem-1.3
 	Martin Väth <martin at mvath.de>:
-	- Fix .gitignore
 	- Fix auto usage for Field::RecreateRefs()
 	- Rename Field::ValidatePosLists() -> Field::LegalState(); improve it
 	- Cosmetical fixes (constexpr static, remove superfluous includes)

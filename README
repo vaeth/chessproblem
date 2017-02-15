@@ -72,6 +72,4 @@ The usage of the demo "chessproblem" is rather elementary and unix style:
 Just the data can be entered over options and arguments (or stdin).
 Then the output is printed, and the program exits.
 
-See "chessproblem -H" for further help.
-
-(Note "-H", not "-h": the latter is reserved for help mate problems...)
+See "chessproblem -h" for further help.

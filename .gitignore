@@ -20,6 +20,7 @@
 /stamp-h1
 /a.out
 
+/chessproblem
 /src/chessproblem
 
 !/zsh/_chessproblem*.*

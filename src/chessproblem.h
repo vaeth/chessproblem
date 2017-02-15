@@ -56,18 +56,24 @@ class ChessProblem : public chess::Field {
   // before we attack the specified list of moves.
   // Level = 0 means that this is the list of the first move.
   // The functions are non-const so that PushMove() and PopMove() can be used.
-  virtual void Progress(ATTRIBUTE_UNUSED int level,
-    ATTRIBUTE_UNUSED const chess::MoveList& moves) {
+  // Also this function can cancel the whole process by returning false.
+  // The default implementation only returns true.
+  ATTRIBUTE_NODISCARD virtual bool Progress(ATTRIBUTE_UNUSED int level,
+      ATTRIBUTE_UNUSED const chess::MoveList& moves) {
     UNUSED(level) UNUSED(moves)
+    return true;
   }
 
   // If the progress value is true, this function is called
   // before we attempt the move specified as parameter,
   // Level = 0 means that this is from the top-level list of moves.
   // The functions are non-const so that PushMove() and PopMove() can be used.
-  virtual void Progress(ATTRIBUTE_UNUSED int level,
-    ATTRIBUTE_UNUSED const chess::Move& my_move) {
+  // Also this function can cancel the whole process by returning false.
+  // The default implementation only returns true.
+  ATTRIBUTE_NODISCARD virtual bool Progress(ATTRIBUTE_UNUSED int level,
+      ATTRIBUTE_UNUSED const chess::Move& my_move) {
     UNUSED(level) UNUSED(my_move)
+    return true;
   }
 
  public:

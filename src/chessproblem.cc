@@ -82,14 +82,19 @@ ChessProblem::Result ChessProblem::RecursiveSolver() {
     ++num_solutions_found_;
     return (Output() ? kWin : kCancel);
   }
-  Progress(half_moves_ - remaining_half_moves_, moves);
+  if (UNLIKELY(!Progress(half_moves_ - remaining_half_moves_, moves))) {
+    return kCancel;
+  }
 
   // Do not forget to re-increase the value before returning!
   // (This is not necessary when returning due to Output() cancelation...)
   --remaining_half_moves_;
   for (chess::MoveList::const_iterator it(moves.begin());
     it != moves.end(); PopMove(), ++it) {
-    Progress(half_moves_minus_one_ - remaining_half_moves_, *it);
+    if (UNLIKELY(!Progress(half_moves_minus_one_ - remaining_half_moves_,
+      *it))) {
+      return kCancel;
+    }
     PushMove(&(*it));
     int opponent(RecursiveSolver());
     // Normally, we should PopMove() here, but we must postpone for Output().

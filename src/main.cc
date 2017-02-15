@@ -23,9 +23,9 @@ using std::string;
 using std::vector;
 
 class ChessProblemDemo : public ChessProblem {
-  ATTRIBUTE_NODISCARD bool Output() override;
-  void Progress(int level, const chess::MoveList& moves) override;
-  void Progress(int level, const chess::Move& my_move) override;
+  bool Output() override;
+  bool Progress(int level, const chess::MoveList& moves) override;
+  bool Progress(int level, const chess::Move& my_move) override;
 
  public:
   int max_solutions_;
@@ -46,7 +46,7 @@ ATTRIBUTE_NONNULL_ static void SplitString(vector<string> *res,
 
 static void Help() {
   format::Say("Usage: chessproblem [options] white-pieces black-pieces\n"
-"OUtput solutions of a chess problem, including possible cooks.\n"
+"Output solutions of a chess problem, including possible cooks.\n"
 "\n"
 "The pieces must be a single string, separated by commas or spaces\n"
 "(when using spaces, do not forget quoting when calling from shell)\n"
@@ -60,9 +60,9 @@ static void Help() {
 "\n"
 "Options:\n"
 "-i   Read position from standard input\n"
-"-m X Mate in X moves (2X - 1 half moves)\n"
-"-s X Selfmate in X moves (2X half moves)\n"
-"-h X Helpmate in X moves (2X half moves)\n"
+"-M X Mate in X moves (2X - 1 half moves)\n"
+"-S X Selfmate in X moves (2X half moves)\n"
+"-H X Helpmate in X moves (2X half moves)\n"
 "-n X Print at most X solutions. Default value is 2. X=0 means to print all.\n"
 "-c X Exclude certain castling. X is the field (or list of fields,\n"
 "     separated by commas) of relevant figures which had been moved.\n"
@@ -75,7 +75,7 @@ static void Help() {
 "-p   Output progress on stdout\n"
 "-P   Output progress on stderr\n"
 "-V   Output version and exit\n"
-"-H   Output this help text and exit");
+"-h   Output this help text and exit");
 }
 
 int main(int argc, char **argv) {
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   ChessProblemDemo chessproblem(2);
   bool get_stdin(false);
   int opt;
-  while ((opt = getopt(argc, argv, "pPim:s:h:n:c:e:bwVH")) != -1) {
+  while ((opt = getopt(argc, argv, "pPim:M:s:S:H:n:c:e:bwVh")) != -1) {
     switch (opt) {
       case 'p':
         chessproblem.progress_io_ = stdout;
@@ -96,14 +96,16 @@ int main(int argc, char **argv) {
         get_stdin = true;
         break;
       case 'm':
+      case 'M':
         chessproblem.set_mode(ChessProblem::kMate,
           CheckNum(optarg, 1, 'm'));
         break;
       case 's':
+      case 'S':
         chessproblem.set_mode(ChessProblem::kSelfMate,
           CheckNum(optarg, 1, 's'));
         break;
-      case 'h':
+      case 'H':
         chessproblem.set_mode(ChessProblem::kHelpMate,
           CheckNum(optarg, 1, 'h'));
         break;
@@ -156,7 +158,7 @@ int main(int argc, char **argv) {
         format::Say("%s %s") % PACKAGE_NAME % PACKAGE_VERSION;
         exit(EXIT_SUCCESS);
         break;
-      case 'H':
+      case 'h':
         Help();
         exit(EXIT_SUCCESS);
         break;
@@ -166,8 +168,8 @@ int main(int argc, char **argv) {
     }
   }
   if (chessproblem.get_mode() == ChessProblem::kUnknown) {
-    format::SayError("One of the options -m, -s, or -h has to be specified\n"
-      "Use option -H for help");
+    format::SayError("One of the options -M, -S, or -H has to be specified\n"
+      "Use option -h for help");
     exit(EXIT_FAILURE);
   }
   chessproblem.set_color();
@@ -307,30 +309,31 @@ bool ChessProblemDemo::Output() {
   return ((max_solutions_ == 0) || (num < max_solutions_));
 }
 
-void ChessProblemDemo::Progress(int level, const chess::MoveList& moves) {
+bool ChessProblemDemo::Progress(int level, const chess::MoveList& moves) {
   if ((progress_io_ == nullptr) || (level > 1)) {
-    return;
+    return true;
   }
   if (level != 0) {
     format::Format(progress_io_, "%s replies to check: %s", true, true)
       % moves.size()
       % str(moves);
-      return;
+    return true;
   }
   format::Format(progress_io_, "%s%s start moves to check: %s", true, true)
     % str()
     % moves.size()
     % str(moves);
+  return true;
 }
 
-void ChessProblemDemo::Progress(int level, const chess::Move& my_move) {
+bool ChessProblemDemo::Progress(int level, const chess::Move& my_move) {
   if ((progress_io_ == nullptr) || (level > 1)) {
-    return;
+    return true;
   }
   if (level != 0) {
     format::Format(progress_io_, "Checking reply %s", true, true)
       % str(my_move);
-    return;
+    return true;
   }
   PushMove(&my_move);
   string board(*this);
@@ -338,4 +341,5 @@ void ChessProblemDemo::Progress(int level, const chess::Move& my_move) {
   format::Format(progress_io_, "Checking start move %s\n%s", false, true)
     % str(my_move)
     % board;
+  return true;
 }

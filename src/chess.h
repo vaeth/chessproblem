@@ -787,6 +787,106 @@ inline static std::ostream& operator<<(std::ostream& os, const Field& f) {
   return os;
 }
 
+// A rather unexpensive convience wrapper to ensure PopMove() is not missed:
+//
+// When the object is initialized, the move is pushed.
+// (You may also initialize it without actually pushing).
+// When the object goes out of scope the move is popped.
+// It is the user's responsibility to ensure that the field is available in
+// the latter moment!
+// The object is non-copyable (though you might create a copy by using
+// get_field() to read the original field. But this would mean that two moves
+// are popped when both objects go out of scope).
+// For special usage it is also possible to move the underlying field with
+// set_field(field), but field must not be nullptr.
+// When you want a possibility to "disarm" the Guard where field may be nullptr
+// use the slightly more expensive subsequent class.
+
+class PushGuard {
+ public:
+  ATTRIBUTE_NONNULL_ PushGuard(Field *field, const Move *my_move) :
+    field_(field) {
+    field->PushMove(my_move);
+  }
+
+  ATTRIBUTE_NONNULL_ explicit PushGuard(Field *field) :
+    field_(field) {
+  }
+
+  ATTRIBUTE_NODISCARD Field *get_field() {
+    return field_;
+  }
+
+  ATTRIBUTE_NONNULL_ void set_field(Field *field) {
+    field_ = field;
+  }
+
+  ~PushGuard() {
+    field_->PopMove();
+  }
+
+  PushGuard(const PushGuard& g) = delete;
+  PushGuard& operator=(const PushGuard& g) = delete;
+
+ private:
+  Field *field_;
+};
+
+// This is a more expensive disarmable variant of the previous class.
+// For this class field can be a nullptr, and in this case no PopMove is called
+// when the object leaves the scope.
+// There is also a default constructor (without arguments) which produces the
+// object in this disarmed state. You can arm it later by calling
+// set_field(field) (possibly followed by PushMove(move)) or by
+// PushMove(field, move) (to do both simultaneously).
+
+class PushGuardDisarmable {
+ public:
+  PushGuardDisarmable() :
+    field_(nullptr) {
+  }
+
+  ATTRIBUTE_NONNULL_ PushGuardDisarmable(Field *field, const Move *my_move) :
+    field_(field) {
+    field->PushMove(my_move);
+  }
+
+  explicit PushGuardDisarmable(Field *field) :
+    field_(field) {
+  }
+
+  ATTRIBUTE_NONNULL_ void PushMove(Field *field, const Move *my_move) {
+    field_ = field;
+    field->PushMove(my_move);
+  }
+
+  ATTRIBUTE_NONNULL_ void PushMove(const Move *my_move) {
+    ASSERT(field_ != nullptr);
+    field_->PushMove(my_move);
+  }
+
+  ATTRIBUTE_NODISCARD Field *get_field() {
+    return field_;
+  }
+
+  void set_field(Field *field) {
+    field_ = field;
+  }
+
+  ~PushGuardDisarmable() {
+    if (field_ != nullptr) {
+      field_->PopMove();
+    }
+  }
+
+  PushGuardDisarmable(const PushGuardDisarmable& g) = delete;
+  PushGuardDisarmable& operator=(const PushGuardDisarmable& g) = delete;
+
+ private:
+  Field *field_;
+};
+
+
 }  // namespace chess
 
 #endif  // SRC_CHESS_H_
