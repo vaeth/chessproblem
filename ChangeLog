@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.0
+	- Multithreading support. This changes the ChessProblem API:
+	  The Output and Progress functions get a different signature and usage
+
 *chessproblem-1.6
 	Martin Väth <martin at mvath.de>:
 	- Fix optimization in build system

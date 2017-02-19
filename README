@@ -53,12 +53,9 @@ Also the chessproblem library is rather general:
 chessproblem.h  - header and documentation for the chessproblem library
 chessproblem.cc - implementation of the chessproblem library
 
-It is a general recursive solver for chess problems.
+It is a general recursive multithreaded solver for chess problems.
 There is no I/O: the output happens only over a virtual Output() function
 which has to be overridden if output is desired.
-
-Currently, only a single thread is used. There is a multithreaded version in
-preparation which will have a slightly different API concerning Output().
 
 The demo program is kept relatively simple:
 

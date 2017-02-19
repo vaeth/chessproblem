@@ -15,6 +15,7 @@ Available options are
   -n  Stop after ./configure, i.e. do not run make
   -e  Keep environment - do not modify LDFLAGS, CXXFLAGS, CFLAGS, CC
   -w  Enable warnings
+  -t  No multithreading
   -o  Enable optimization
   -g  Use clang++, setting CXX, filtering some flags (default if available)
   -G  Use default CXX (mnemonic: GNU)
@@ -90,6 +91,7 @@ quiet=false
 dep_default=:
 earlystop=false
 keepenv=false
+multithreading=:
 warnings=false
 use_chown=false
 jarg='-j3'
@@ -103,7 +105,7 @@ debugging=false
 command -v clang++ >/dev/null 2>&1 && clang=: || clang=false
 dialect='enable'
 OPTIND=1
-while getopts 'qgGdnewoCxXyYdc:j:rhH' opt
+while getopts 'qgGdnewtoCxXyYdc:j:rhH' opt
 do	case $opt in
 	q)	quiet=:;;
 	g)	clang=:;;
@@ -111,6 +113,7 @@ do	case $opt in
 	n)	earlystop=:;;
 	e)	keepenv=:;;
 	w)	warnings=:;;
+	t)	multithreading=false;;
 	o)	optimization=:;;
 	C)	use_ccache=false;;
 	x)	recache=:;;
@@ -137,6 +140,8 @@ SetCcache
 	configure_extra=$configure_extra' --enable-strong-optimization'
 ! $debugging || configure_extra=$configure_extra' --enable-debugging'
 ! $warnings || configure_extra=$configure_extra' --enable-warnings'
+$multithreading && configure_extra=$configure_extra' --with-multithreading' \
+	|| configure_extra=$configure_extra' --without-multithreading'
 $quiet && quietredirect='>/dev/null' || quietredirect=
 
 if $use_chown

@@ -19,6 +19,7 @@ src/chessproblem.h \
 src/main.cc
 
 bin_PROGRAMS = chessproblem
+chessproblem_LDADD = $(MULTITHREAD_LIBS)
 
 # Stuff from our distribution
 EXTRA_DIST = \

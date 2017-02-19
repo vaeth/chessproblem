@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [1.6],
+AC_INIT([chessproblem], [2.0],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -712,6 +712,49 @@ AS_IF([$bi_expect_works],
 	[AC_DEFINE([HAVE___BUILTIN_EXPECT],
 		[1],
 		[Define if __builtin_expect can be used])])
+
+# What about multithreading?
+AC_MSG_CHECKING([whether multithreading should be used])
+AS_VAR_SET([support_multithreading], [:])
+AS_VAR_SET([requested_multithreading], [false])
+AC_ARG_WITH([multithreading],
+	[AS_HELP_STRING([--with-multithreading],
+		[Compile in support for cache method multithreading])],
+	[AS_CASE(["$withval"],
+		[no], [AS_VAR_SET([support_multithreading], [false])],
+		[yes], [AS_VAR_SET([requested_multithreading], [:])])])
+AS_IF([$support_multithreading],
+  [AS_VAR_SET([MULTITHREAD_LIBS], ["-lpthread"]);
+  AS_VAR_COPY([saveldflags], [LDFLAGS])
+  AS_VAR_APPEND([LDFLAGS], [" $MULTITHREAD_LIBS"])
+  MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+#include <thread>
+#include <mutex>
+int ret = 1;
+std::mutex m;
+static void f(int i);
+static void f(int i) {
+  m.lock();
+  ret = i;
+  m.unlock();
+}
+]], [[
+  std::thread t(f, 0);
+  t.join();
+  return ret;
+		]])],
+	[],
+	[AS_VAR_SET([support_multithreading], [false])])])
+AS_IF([$support_multithreading],
+	[MV_MSG_RESULT([yes])],
+	[MV_MSG_RESULT([no])
+	AS_IF([$requested_multithreading],
+		[AC_MSG_ERROR(multithreading requested but not available)])
+	AC_DEFINE([NO_CHESSPROBLEM_THREADS],
+		[1],
+		[Define if multithreading is not wanted/possible])
+	AS_VAR_SET([MULTITHREAD_LIBS], [])])
+AC_SUBST([MULTITHREAD_LIBS])
 
 # Done!
 AC_OUTPUT()
