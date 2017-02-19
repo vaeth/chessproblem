@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [1.5],
+AC_INIT([chessproblem], [1.6],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -169,6 +169,7 @@ AS_IF([$debugging],
 AS_IF([$optimization],
 	[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_LINK], [ \
 			-O2 \
+			-DNDEBUG \
 			-fomit-frame-pointer \
 			-fno-common \
 			-fstrict-aliasing \
@@ -238,6 +239,8 @@ AS_CASE([" $CXXFLAGS $my_cxxadd "],
 			"])])
 AS_IF([$strong_optimization],
 	[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_FALSE], [ \
+			-DNO_DEBUG \
+			-DG_DISABLE_ASSERT \
 			-fweb \
 			-fgraphite \
 			-fgraphite-identity \
@@ -250,14 +253,7 @@ AS_IF([$strong_optimization],
 			-fvect-cost-model \
 			-fno-rtti \
 			-fno-threadsafe-statics \
-		], [$my_cxxfatal], [$CPPFLAGS], [:])
-	AS_IF([$strong_security],
-		[],
-		[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_LINK], [ \
-			-DNDEBUG \
-			-DNO_DEBUG \
-			-DG_DISABLE_ASSERT \
-		], [$my_cxxfatal], [$CPPFLAGS], [:])])])
+		], [$my_cxxfatal], [$CPPFLAGS], [:])])
 dnl We do not use:
 dnl Would not change anything:
 dnl			-ffast-math \
@@ -512,7 +508,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 [[noreturn]] static void dummy();
 static void
 dummy()
-{ exit(0); }
+{ std::exit(0); }
 		]], [[
 dummy();
 		]])],
@@ -532,7 +528,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 __attribute__ ((noreturn)) static void dummy();
 static void
 dummy()
-{ exit(0); }
+{ std::exit(0); }
 		]], [[
 dummy();
 		]])],

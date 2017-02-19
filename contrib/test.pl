@@ -1,24 +1,36 @@
 #!/usr/bin/env perl
 use warnings;
 use strict;
-if ((!@ARGV) || ($ARGV[0] =~ m{^-})) {
-  $0 =~ m{([^/]*)$};
-  printf(STDERR "Usage: $1 [path-to]chessproblem [chessproblem options]\n");
+sub Die {
+  print(STDERR @_, "\n");
   exit(1)
 }
+if ((!@ARGV) || ($ARGV[0] =~ m{^-})) {
+  $0 =~ m{([^/]*)$};
+  Die("Usage: $1 [path-to]chessproblem [chessproblem options]");
+}
 my $time = time();
-my @result = ();
+my @result;
+my $mode = '';
 while (<DATA>) {
   chomp();
-  s{\s*\#.*}{};
+  s{\s*$}{};
+  s{^\s*}{};
+  s{\#.*}{};
   next if ($_ eq '');
-  if (@result) {
-    my $expected = $_;
-    my @want = split(/;\s*/);
+  $mode = !$mode;
+  if (!$mode) {
+    s{\s*;\s*}{; }g;
+    my @want = split(/\s*;\s*/);
+    my $msg = " (expected only $_)";
+    if (m{\s*No}) {
+      @want = ();
+      $msg = ' (no solution was expected)'
+    }
     my $fail = '';
     for my $i (@result) {
       if (!grep { $i eq $_ } (@want)) {
-        printf(STDERR "Wrong result: $i found but expected only $expected\n");
+        printf(STDERR "Wrong result: $i found$msg\n");
         $fail = 1
       }
     }
@@ -28,20 +40,30 @@ while (<DATA>) {
         $fail = 1
       }
     }
-    exit 1 if ($fail);
-    @result = ();
+    exit(1) if ($fail);
     next
   }
-  my $cmd = join(' ', @ARGV, '-n0', $_);
+  @result = ();
+  my $line = $_;
+  s{\s*([\"\'])([^\"\']*)\1\s*([\"\'])([^\"\']*)\3}{};
+  Die('Bad format of line $line') unless(defined($2) && defined($4) &&
+    ($2 ne '') && ($4 ne ''));
+  my @cmd = (@ARGV, '-n0', split(/\s+/), $2, $4);
+  my $cmd = join(' ', @ARGV, '-n0', split(/\s+/), "\"$2\"", "\"$4\"");
   print("$cmd\n");
-  open(my $fh, '-|', $cmd) or die;
+  open(my $fh, '-|', @cmd) or Die('Failed to start command');
   while (<$fh>) {
     chomp();
+    s{\s*$}{};
     s{^.*\:\s*}{};
+    s{No.*}{};
+    next if($_ eq '');
     push(@result, $_)
   }
-  close($fh);
-  die unless (@result)
+  unless(close($fh)) {
+    my $signal = ($? & 127);
+    Die("Died with signal $signal: $cmd") if ($signal)
+  }
 }
 $time = time() - $time;
 printf("Tests needed $time seconds\n");

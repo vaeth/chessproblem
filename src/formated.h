@@ -12,7 +12,7 @@
 
 #include <config.h>
 
-#include <cstdio>
+#include <cstdio>  // FILE
 
 #include <ostream>  // only used for overloading
 #include <sstream>

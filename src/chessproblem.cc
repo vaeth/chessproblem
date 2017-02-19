@@ -7,17 +7,18 @@
 #include "src/chessproblem.h"
 #include <config.h>
 
-#include "src/m_assert.h"
+#include <cassert>
+
 #include "src/m_likely.h"
 
 int ChessProblem::Solve() {
-  ASSERT(mode_ != kUnknown);
-  ASSERT(half_moves_ > 0);
-  // Make sure to use defaults if the user of the class did not:
+  assert(mode_ != kUnknown);
+  assert(half_moves_ > 0);
+  // Make sure to use defaults if the user of the class did not set them:
   set_default_color();
   default_color_ = false;
-  ASSERT(LegalValues());
-  ASSERT(LegalState());
+  assert(LegalValues());
+  assert(LegalState());
 
   num_solutions_found_ = 0;
   remaining_half_moves_ = half_moves_;

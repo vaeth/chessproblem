@@ -10,7 +10,7 @@
 
 #include <cstdlib>  // atoi, exit
 
-#include <iostream>  // std::cin
+#include <iostream>  // cin, getline
 #include <string>
 #include <vector>
 
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
                 chess::kNoBlackShortCastling);
             } else {
               format::SayError("Argument %s of -c is not understood") % c;
-              exit(EXIT_FAILURE);
+              std::exit(EXIT_FAILURE);
             }
           }
         }
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
         eparg = optarg[0];
         if ((eparg < 'a') || (eparg > 'h')) {
           format::SayError("Argument %s of -e is not understood") % optarg;
-          exit(EXIT_FAILURE);
+          std::exit(EXIT_FAILURE);
         }
         break;
       case 'b':
@@ -156,21 +156,21 @@ int main(int argc, char **argv) {
         break;
       case 'V':
         format::Say("%s %s") % PACKAGE_NAME % PACKAGE_VERSION;
-        exit(EXIT_SUCCESS);
+        std::exit(EXIT_SUCCESS);
         break;
       case 'h':
         Help();
-        exit(EXIT_SUCCESS);
+        std::exit(EXIT_SUCCESS);
         break;
       default:
-        exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
         break;
     }
   }
   if (chessproblem.get_mode() == ChessProblem::kUnknown) {
     format::SayError("One of the options -M, -S, or -H has to be specified\n"
       "Use option -h for help");
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   chessproblem.set_color();
   chess::EnPassant ep(chess::kNoEnPassant);
@@ -183,11 +183,11 @@ int main(int argc, char **argv) {
       format::SayError(
         "Only 0 or 2 arguments are admissible, but %d are specified")
         % (argc - optind);
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     if (get_stdin) {
       format::SayError("With option -i no arguments must be specified");
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     PlaceFigures(&chessproblem, chess::kWhite, argv[optind]);
     PlaceFigures(&chessproblem, chess::kBlack, argv[optind + 1]);
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
       format::Say("Enter the white position in chess notation:");
     }
     if (std::cin.eof()) {
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     string line;
     std::getline(std::cin, line);
@@ -205,14 +205,14 @@ int main(int argc, char **argv) {
       format::Say("Enter the black position in chess notation:");
     }
     if (std::cin.eof()) {
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     std::getline(std::cin, line);
     PlaceFigures(&chessproblem, chess::kBlack, line);
   }
   if (!chessproblem.HaveKings()) {
     format::SayError("There are not white and black kings on the board");
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   if (!chessproblem.IsEnPassantValid(ep, true)) {
     format::SayError("Invalid or useless en passant field specified");
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
       }
       format::SayError("Admissible value(s) would be: %s") % admissible_ep;
     }
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   chessproblem.set_ep(ep);
   chess::Castling new_castling(chessproblem.CalcCastling(castling));
@@ -251,7 +251,7 @@ static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
   if (figures.empty()) {
     format::SayError("No figures of color %s specified")
       % chess::color_name[color];
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   for (auto s : figures) {
     chess::Figure figure(chess::kNoFigure);
@@ -265,24 +265,24 @@ static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
     }
     if ((figure == chess::kNoFigure) || (pos == chess::Field::kFieldEnd)) {
       format::SayError("Figure or placement not understood: %s") % s;
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     if (chessproblem->GetFigure(pos) != chess::kEmpty) {
       format::SayError("Figure was already on this field: %s") % s;
-      exit(EXIT_FAILURE);
+      std::exit(EXIT_FAILURE);
     }
     chessproblem->PlaceFigure(chess::ColoredFigure(figure, color), pos);
   }
 }
 
 static int CheckNum(const char *num, int min_value, char c) {
-  int ret(atoi(num));
+  int ret(std::atoi(num));
   if (ret < min_value) {
     format::SayError("Argument %s of -%s should be at least %d")
       % num
       % c
       % min_value;
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
   return ret;
 }

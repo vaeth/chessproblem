@@ -9,13 +9,14 @@
 
 #include <config.h>
 
+#include <cassert>
+
 #include <array>
 #include <deque>
 #include <list>
 #include <string>
 #include <vector>
 
-#include "src/m_assert.h"
 #include "src/m_attribute.h"
 
 namespace chess {
@@ -570,7 +571,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   ATTRIBUTE_PURE Castling CalcCastling(Castling c) const;
 
   void set_color(Figure color) {
-    ASSERT(IsColor(color));
+    assert(IsColor(color));
     color_ = FigureColor(color);
   }
 
@@ -580,15 +581,15 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   void set_ep(EnPassant ep) {
-    ASSERT(have_color());
-    ASSERT((ep == kNoEnPassant) || ((color_ == kWhite) ?
+    assert(have_color());
+    assert((ep == kNoEnPassant) || ((color_ == kWhite) ?
       ((ep >= kStartRow6) && (ep < kEndRow6)) :
       ((ep >= kStartRow3) && (ep < kEndRow3))));
     ep_ = ep;
   }
 
   void set_castling(Castling c) {
-    ASSERT(c < kUnknownCastling);
+    assert(c < kUnknownCastling);
     castling_ = c;
   }
 
@@ -643,22 +644,22 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   ATTRIBUTE_NODISCARD Castling get_castling() const {
-    ASSERT(castling_ < kUnknownCastling);
+    assert(castling_ < kUnknownCastling);
     return castling_;
   }
 
   ATTRIBUTE_NODISCARD EnPassant get_ep_() const {
-    ASSERT(ep_ != kUnknownEnPassant);
+    assert(ep_ != kUnknownEnPassant);
     return ep_;
   }
 
   ATTRIBUTE_NODISCARD ATTRIBUTE_PURE Figure get_color() const {
-    ASSERT(have_color());
+    assert(have_color());
     return color_;
   }
 
   ATTRIBUTE_NODISCARD ATTRIBUTE_PURE Figure GetFigure(Pos pos) const {
-    ASSERT((pos >= kFieldStart) && (pos < kFieldEnd) &&
+    assert((pos >= kFieldStart) && (pos < kFieldEnd) &&
       (field_[pos] != kNoFigure));
     return field_[pos];
   }
@@ -668,7 +669,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   }
 
   ATTRIBUTE_NODISCARD const PosList& GetPosList(Figure color) const {
-    ASSERT(UncoloredFigure(color) == kEmpty);
+    assert(UncoloredFigure(color) == kEmpty);
     return pos_lists_[color];
   }
 
@@ -683,7 +684,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
   // Is color in check?
   ATTRIBUTE_NODISCARD bool IsInCheck(Figure color) const {
-    ASSERT(UncoloredFigure(color) == kEmpty);
+    assert(UncoloredFigure(color) == kEmpty);
     return IsThreatened(kings_[color], color);
   }
 
@@ -710,7 +711,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     ClearField();
   }
 
-  // No destructor is needed, but we must take care when copying moving,
+  // No destructor is needed, but we must take care when copying/moving,
   // because we need to fixup refs_ to point to the copied/moved iterators.
 
   Field(const Field& f) {
@@ -861,7 +862,7 @@ class PushGuardDisarmable {
   }
 
   ATTRIBUTE_NONNULL_ void PushMove(const Move *my_move) {
-    ASSERT(field_ != nullptr);
+    assert(field_ != nullptr);
     field_->PushMove(my_move);
   }
 

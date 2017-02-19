@@ -131,10 +131,12 @@ then	( eval '[ "$(( 0 + 1 ))" = 1 ]' ) >/dev/null 2>&1 && \
 fi
 
 SetCcache
-[ -n "${dialect:++}" ] && configure_extra=$configure_extra" --$dialect-new-dialect"
-$optimization && configure_extra=$configure_extra' --enable-strong-optimization --enable-security'
-$debugging && configure_extra=$configure_extra' --enable-debugging'
-$warnings && configure_extra=$configure_extra' --enable-warnings'
+[ -z "${dialect:++}" ] || \
+	configure_extra=$configure_extra" --$dialect-new-dialect"
+! $optimization || \
+	configure_extra=$configure_extra' --enable-strong-optimization'
+! $debugging || configure_extra=$configure_extra' --enable-debugging'
+! $warnings || configure_extra=$configure_extra' --enable-warnings'
 $quiet && quietredirect='>/dev/null' || quietredirect=
 
 if $use_chown

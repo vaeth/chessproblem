@@ -12,7 +12,7 @@
 
 #include <cctype>  // isdigit
 
-#include <cstdio>
+#include <cstdio>  // fwrite, fflush
 #include <cstdlib>  // atoi, exit
 
 #include <string>
@@ -32,18 +32,18 @@ const FormatManip::ArgType
 
 void Format::BadFormat() const {
   SayError("format: bad format specification \"%s\"") % text_;
-  exit(EXIT_FAILURE);
+  std::exit(EXIT_FAILURE);
 }
 
 #ifdef FORMAT_DEBUG
 void Format::TooFewArguments() const {
   SayError("format: too few arguments passed for \"%s\"") % text_;
-  exit(EXIT_FAILURE);
+  std::exit(EXIT_FAILURE);
 }
 
 void Format::TooManyArguments() const {
   SayError("format: too many arguments passed for \"%s\"") % text_;
-  exit(EXIT_FAILURE);
+  std::exit(EXIT_FAILURE);
 }
 #endif
 
@@ -68,14 +68,14 @@ void Format::Init() {
       break;
     }
     ArgCount argnum(imp++);
-    if (isdigit(c)) {
+    if (std::isdigit(c)) {
       string::size_type e(text_.find('$', i));
       if (UNLIKELY(e == string::npos)) {
         BadFormat();
       }
       len += e - start;
       string number(text_, i, e - i);
-      int index = atoi(number.c_str());
+      int index = std::atoi(number.c_str());
       if (UNLIKELY(argnum <= 0)) {
         BadFormat();
       }
@@ -143,10 +143,10 @@ void Format::NewlineOutput() {
   }
   if (output_ != nullptr) {
     if (LIKELY(!text_.empty())) {
-      fwrite(text_.c_str(), sizeof(char), text_.size(), output_);
+      std::fwrite(text_.c_str(), sizeof(char), text_.size(), output_);
     }
     if (UNLIKELY(flush_)) {
-      fflush(output_);
+      std::fflush(output_);
     }
   }
 }

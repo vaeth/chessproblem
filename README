@@ -40,8 +40,6 @@ The chess library consists of the files:
 
 chess.h    - the main header which also documents how the chess library is used
 chess.cc   - the implementation of the chess library
-m_assert.h - auxiliary macros to check ASSERT(...) (costs time) on some wrong
-             usages of the library.
 m_attribute.h - auxiliary macros for compiler specific attributes to
              suppress/emit warnings or speed up the library
 m_likely.h - auxiliary compiler-dependent macros LIKELY and UNLIKELY for tests

@@ -1,5 +1,13 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.6
+	Martin Väth <martin at mvath.de>:
+	- Fix optimization in build system
+	- test.pl: Clean argument treatment
+	- Fix C++ standard compatibility (use std:: for include <c...>)
+	- Use standard assert()
+	- Trivial fixes in comments
+
 *chessproblem-1.5
 	Martin Väth <martin at mvath.de>:
 	- Rename options to free -h for the standard "help" meaning

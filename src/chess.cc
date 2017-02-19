@@ -7,9 +7,10 @@
 #include "src/chess.h"
 #include <config.h>
 
+#include <cassert>
+
 #include <string>
 
-#include "src/m_assert.h"
 #include "src/m_attribute.h"
 #include "src/m_likely.h"
 
@@ -299,7 +300,7 @@ Field& Field::operator=(const Field&& f) {
 }
 
 void Field::PlaceFigure(Figure figure, Pos pos) {
-  ASSERT((pos >= kFieldStart) && (pos < kFieldEnd));
+  assert((pos >= kFieldStart) && (pos < kFieldEnd));
   auto i(FigureColor(figure));
   if (UNLIKELY(UncoloredFigure(figure) == kKing)) {
     kings_[Color2Index(i)] = pos;
@@ -308,7 +309,7 @@ void Field::PlaceFigure(Figure figure, Pos pos) {
   pos_list.push_front(pos);
   Figure& field = field_[pos];
   Pointer& ref = refs_[pos];
-  ASSERT(field != kNoFigure);
+  assert(field != kNoFigure);
   if (UNLIKELY(field != kEmpty)) {
     pos_lists_[Color2Index(FigureColor(field))].erase(ref);
   }
@@ -317,25 +318,25 @@ void Field::PlaceFigure(Figure figure, Pos pos) {
 }
 
 void Field::RemoveFigure(Pos pos) {
-  ASSERT((pos >= kFieldStart) && (pos < kFieldEnd));
+  assert((pos >= kFieldStart) && (pos < kFieldEnd));
   Figure& field = field_[pos];
-  ASSERT((field != kEmpty) && (field != kNoFigure));
+  assert((field != kEmpty) && (field != kNoFigure));
   pos_lists_[Color2Index(FigureColor(field))].erase(refs_[pos]);
   field = kEmpty;
 }
 
 void Field::MoveFigure(Pos from, Pos to) {
-  ASSERT((from >= kFieldStart) && (from < kFieldEnd));
-  ASSERT((to >= kFieldStart) && (to < kFieldEnd));
+  assert((from >= kFieldStart) && (from < kFieldEnd));
+  assert((to >= kFieldStart) && (to < kFieldEnd));
   Figure& from_field = field_[from];
   Figure figure(from_field);
-  ASSERT((figure != kEmpty) && (figure != kNoFigure));
+  assert((figure != kEmpty) && (figure != kNoFigure));
   if (UNLIKELY(UncoloredFigure(figure) == kKing)) {
     kings_[Color2Index(FigureColor(figure))] = to;
   }
   Figure& to_field = field_[to];
   Pointer& to_ref = refs_[to];
-  ASSERT(to_field != kNoFigure);
+  assert(to_field != kNoFigure);
   if (UNLIKELY(to_field != kEmpty)) {
     pos_lists_[Color2Index(FigureColor(to_field))].erase(to_ref);
   }
@@ -393,7 +394,7 @@ void Field::CalcEnPassant(EnPassantList *ep_values) const {
 }
 
 bool Field::IsEnPassantValid(EnPassant ep, bool opponent_test) const {
-  ASSERT(UncoloredFigure(color_) == kEmpty);
+  assert(UncoloredFigure(color_) == kEmpty);
   if (ep == kNoEnPassant) {
     return true;
   }
@@ -459,7 +460,7 @@ bool Field::HaveKings() const {
 }
 
 void Field::PushMove(const Move *my_move) {
-  ASSERT(LegalValues());
+  assert(LegalValues());
   Castling castling(castling_);
   Figure color(color_);
   Pos from(my_move->from_), to(my_move->to_);
@@ -833,7 +834,7 @@ bool Field::GenerateBlackPawn(MoveList *moves, Pos from) const {
 }
 
 bool Field::Generator(MoveList *moves) const {
-  ASSERT(LegalValues());
+  assert(LegalValues());
   Figure color(color_);
   if (UNLIKELY(castling_ != kNoCastling)) {
     Castling castling((color_ == kWhite) ? castling_ :
@@ -908,7 +909,7 @@ bool Field::Generator(MoveList *moves) const {
         }
         break;
       default:
-        ASSERT(false);
+        assert(false);
         break;
     }
   }

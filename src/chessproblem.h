@@ -9,8 +9,9 @@
 
 #include <config.h>
 
+#include <cassert>
+
 #include "src/chess.h"
-#include "src/m_assert.h"
 #include "src/m_attribute.h"
 
 /*
@@ -104,8 +105,8 @@ class ChessProblem : public chess::Field {
   // half_moves_ are set.
   // Default color is pre-initialized if set_color() has not been called yet.
   void set_mode(Mode mode, int moves) {
-    ASSERT((mode == kMate) || (mode == kSelfMate) || (mode == kHelpMate));
-    ASSERT(moves > 0);
+    assert((mode == kMate) || (mode == kSelfMate) || (mode == kHelpMate));
+    assert(moves > 0);
     mode_ = mode;
     half_moves_ = ((mode == kMate) ? (2 * moves - 1) : (2 * moves));
     set_default_color();
@@ -126,7 +127,7 @@ class ChessProblem : public chess::Field {
 
   // Set the default color according to mode_ if not already specified.
   void set_color() {
-    ASSERT(mode_ != kUnknown);
+    assert(mode_ != kUnknown);
     set_default_color();
     default_color_ = false;
   }
