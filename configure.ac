@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [2.0],
+AC_INIT([chessproblem], [2.1],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -728,20 +728,21 @@ AS_IF([$support_multithreading],
   AS_VAR_COPY([saveldflags], [LDFLAGS])
   AS_VAR_APPEND([LDFLAGS], [" $MULTITHREAD_LIBS"])
   MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
-#include <thread>
+#include <atomic>
 #include <mutex>
-int ret = 1;
+#include <thread>
+std::atomic_int ret(1);
 std::mutex m;
 static void f(int i);
 static void f(int i) {
-  m.lock();
-  ret = i;
-  m.unlock();
+	m.lock();
+	ret.store(0, std::memory_order_release);
+	m.unlock();
 }
 ]], [[
-  std::thread t(f, 0);
-  t.join();
-  return ret;
+	std::thread t(f, 0);
+	t.join();
+	return ret.load(std::memory_order_consume);
 		]])],
 	[],
 	[AS_VAR_SET([support_multithreading], [false])])])

@@ -10,10 +10,13 @@
 #include <cassert>
 
 #ifndef NO_CHESSPROBLEM_THREADS
+#include <atomic>
+#include <mutex>  // NOLINT(build/c++11)
 #include <thread>  // NOLINT(build/c++11)
 #include <vector>
 #endif
 
+#include "src/m_attribute.h"
 #include "src/m_likely.h"
 
 const int
@@ -22,44 +25,108 @@ const int
 
 #ifndef NO_CHESSPROBLEM_THREADS
 namespace chessproblem {
-class Result {
+
+// For each MoveList, one Communicate object is created.
+// All threads "testing" lists from this MoveList as their first move
+// share this objects.
+// In order to receive a signal from parent MoveLists, we collect all objects
+// as a tree (with "inverse" pointers from childs to parents only).
+// The "root" of that tree (to which all nodes eventually point to) is *cancel_
+
+class Communicate {
  private:
-  Result *parent_;
-  volatile bool kill_signal_;
-  volatile bool result_;
+  Communicate *parent_;
+  bool equal_level_threads_;
+  std::atomic_bool kill_signal_;
+  const chess::MoveList *moves_;
+  std::atomic<chess::MoveList::const_iterator> current_;
+  chess::MoveList::const_iterator end_;
+  std::atomic_bool result_;
+  std::mutex current_mutex_;
+  typedef std::lock_guard<std::mutex> LockGuard;
 
  public:
-  explicit Result(Result *parent) :
-    parent_(parent), kill_signal_(false) {
+  explicit Communicate(Communicate *parent) :
+    parent_(parent), equal_level_threads_(false), kill_signal_(false) {
   }
 
-  explicit Result(Result *parent, bool result) :
-    parent_(parent), kill_signal_(false), result_(result) {
+  ATTRIBUTE_NONNULL_ explicit Communicate(Communicate *parent,
+      const chess::MoveList *moves, bool result) :
+    parent_(parent), equal_level_threads_(false), kill_signal_(false),
+    moves_(moves), current_(moves->begin()), end_(moves->end()),
+    result_(result) {
   }
 
+  ATTRIBUTE_NODISCARD bool get_equal_level_threads() {
+    return equal_level_threads_;
+  }
+
+  // This must be called before starting any subthread of equal level:
+  // There is no atomic signaling mechanism used.
+  void set_equal_level_threads() {
+    equal_level_threads_ = true;
+  }
+
+  // Return true if GetIncreasing() would probably get a new move.
+  // By its very nature, the data can already be outdated at the return.
+  bool HaveNextUnsafe() const {
+    return (current_.load(std::memory_order_consume) != end_);
+  }
+
+  // Get the next move. Return true if there is some. Not thread-safe
+  ATTRIBUTE_NONNULL_ bool GetIncreasingUnsafe(const chess::Move **my_move) {
+    auto current = current_.load(std::memory_order_relaxed);
+    if (UNLIKELY(current == end_)) {
+      return false;
+    }
+    *my_move = &(*current);
+    ++current;
+    current_.store(current, std::memory_order_relaxed);
+    return true;
+  }
+
+  // Get the next move. Return true if there is some. Thread-safe and slow
+  ATTRIBUTE_NONNULL_ bool GetIncreasing(const chess::Move **my_move) {
+    LockGuard lock(current_mutex_);
+    auto current = current_.load(std::memory_order_consume);
+    if (UNLIKELY(current == end_)) {
+      return false;
+    }
+    *my_move = &(*current);
+    ++current;
+    current_.store(current, std::memory_order_release);
+    return true;
+  }
+
+  // Get the next move. Return true if there is some
+  ATTRIBUTE_NONNULL_ bool GetIncreasing(const chess::Move **my_move,
+      bool threadsafe) {
+    if (threadsafe) {
+      return GetIncreasing(my_move);
+    }
+    return GetIncreasingUnsafe(my_move);
+  }
+
+  // Return the signaled result
   bool get_result() const {
-    return result_;
+    return result_.load(std::memory_order_consume);
   }
 
+  // Signal success
   void Win() {
-    // No lock is necessary for setting a bool:
-    // Except for initialization, we set it _only_ to true
-    result_ = true;
+    result_.store(true, std::memory_order_release);
   }
 
-  // Signal all kill to current thread and all subthreads
+  // Signal kill to current thread and all descendants
   void Kill() {
-    // No lock is necessary for setting a bool:
-    // Except for initialization, we set it _only_ to true
-    kill_signal_ = true;
+    kill_signal_.store(true, std::memory_order_release);
   }
 
   // Has current thread or some of its parents received a signal?
   bool GotSignal() const {
-    for (const Result *curr(this); LIKELY(curr != nullptr);
+    for (const Communicate *curr(this); LIKELY(curr != nullptr);
       curr = curr->parent_) {
-      // No lock is necessary for reading a bool
-      if (UNLIKELY(curr->kill_signal_)) {
+      if (UNLIKELY(curr->kill_signal_.load(std::memory_order_consume))) {
         return true;
       }
     }
@@ -69,9 +136,10 @@ class Result {
   // As GotSignal() but faster if we know that there are no parents
   bool TopSignal() const {
     assert(parent_ == nullptr);
-    return kill_signal_;
+    return kill_signal_.load(std::memory_order_consume);
   }
 };
+
 }  // namespace chessproblem
 #endif  // NO_CHESSPROBLEM_THREADS
 
@@ -84,7 +152,6 @@ int ChessProblem::Solve() {
   assert(LegalValues());
   assert(LegalState());
 
-  num_solutions_found_ = 0;
   switch (mode_) {
     case kMate:
       // If we are mate in the last move, we have lost
@@ -103,21 +170,23 @@ int ChessProblem::Solve() {
   }
   // format::Print() % str();
 #ifndef NO_CHESSPROBLEM_THREADS
+  num_solutions_found_.store(0, std::memory_order_release);
   thread_count_ = 0;
-  have_running_threads_ = false;
   if (half_moves_ < min_half_moves_depth_) {
     max_threads_ = 0;
   } else {
     max_threads_ = max_parallel_ - 1;
     new_thread_depth_ = half_moves_ - min_half_moves_depth_;
   }
-  chessproblem::Result kill_childs(nullptr);
+  chessproblem::Communicate kill_childs(nullptr);
   RecursiveSolver((cancel_ = &kill_childs), this);
+  return num_solutions_found_.load(std::memory_order_acquire);
 #else
+  num_solutions_found_ = 0;
   cancel_ = false;
   RecursiveSolver();
-#endif
   return num_solutions_found_;
+#endif
 }
 
 #ifndef NO_CHESSPROBLEM_THREADS
@@ -244,7 +313,7 @@ inline bool ChessProblem::ProgressCancel(const chess::Move *my_move) {
 // Since there are only two states (win or loose, no even),
 // alpha/beta pruning would happen only if "normal" pruning happens anyway...
 #ifndef NO_CHESSPROBLEM_THREADS
-bool ChessProblem::RecursiveSolver(chessproblem::Result *result,
+bool ChessProblem::RecursiveSolver(chessproblem::Communicate *parent,
     chess::Field *field) {
   int remaining_half_moves(static_cast<int>(field->get_move_stack().size())
     - half_moves_);
@@ -292,11 +361,9 @@ bool ChessProblem::RecursiveSolver() {
   if (UNLIKELY(ProgressCancel(&moves, field))) {
     return true;
   }
-  // result might be modified several times, but only to "true" (if at all).
-  // Therefore, it is safe to not even use any mutex
-  chessproblem::Result child_result(result, default_return_value_);
-  SolverThread(&child_result, &moves, moves.begin(), field);
-  return child_result.get_result();
+  chessproblem::Communicate communicate(parent, &moves, default_return_value_);
+  SolverThread(&communicate, field);
+  return communicate.get_result();
 #else  // defined(NO_CHESSPROBLEM_THREADS)
   if (UNLIKELY(ProgressCancel(&moves))) {
     return true;
@@ -340,37 +407,23 @@ bool ChessProblem::RecursiveSolver() {
 }
 
 #ifndef NO_CHESSPROBLEM_THREADS
-void ChessProblem::SolverThread(chessproblem::Result *result,
-    const chess::MoveList *moves,
-    const chess::MoveList::const_iterator my_begin, chess::Field *field) {
+void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
+    chess::Field *field) {
+  bool subthread(communicate->get_equal_level_threads());
   std::vector<std::thread> threads;
-  bool partial_list(my_begin != moves->begin());
-  const chess::MoveList::const_iterator moves_end(moves->end());
-  for (auto it = my_begin; it != moves_end; ++it) {
-    const chess::Move *current_move(&(*it));
-    // Make sure each move from the current moves is processed at most once
-    if (HaveRunningThreads()  // (a shortcut if no threads are running)
-      && (partial_list  // We are a subthread of a loop
-        || !threads.empty())) {  // or we already started a thread in the loop
-      LockGuard lock(processed_moves_mutex_);
-      if (!processed_moves_[moves].insert(current_move).second) {
-        // the move was already processed
-        continue;
-      }
-    }
+  const chess::Move *current_move;
+  while (communicate->GetIncreasing(&current_move, HaveRunningThreads())) {
     // Possibly start a new thread
     if (MultiThreadedMode()) {  // (quick test to do a shortcut)
-      if (result->GotSignal()) {
+      if (communicate->GotSignal()) {
         break;
       }
       if (field->get_move_stack().size() <= new_thread_depth_) {
-        chess::MoveList::const_iterator next_it(it);
-        ++next_it;
-        if (next_it != moves_end) {  // shortcut if we would immediately end
+        if (communicate->HaveNextUnsafe()) {
           if (IncreaseThreads()) {
-            // The new thread is just the current loop starting from ++it
+            communicate->set_equal_level_threads();
             threads.emplace_back(&ChessProblem::SolverThread, this,
-              result, moves, next_it, new chess::Field(*field));
+              communicate, new chess::Field(*field));
           }
         }
       }
@@ -379,21 +432,21 @@ void ChessProblem::SolverThread(chessproblem::Result *result,
       return;
     }
     field->PushMove(current_move);
-    bool opponent(RecursiveSolver(result, field));
+    bool opponent(RecursiveSolver(communicate, field));
     chess::PushGuard push_guard(field);  // Postpone field->PopMove()
-    if (result->GotSignal()) {
+    if (cancel_->TopSignal()) {
       break;
     }
     if (opponent == true) {
       // If opponent has reached his goal or if we are in helpmate do not prune
       continue;
     }
-    result->Win();
+    communicate->Win();
     // This is the only pruning we can do: We need not check after winning
     // (except when in the top level so that we find cooks).
     if (LIKELY(field->get_move_stack().size() != 1)) {
       // We are at top level (note that push_guard still exists!)
-      result->Kill();
+      communicate->Kill();
       break;
     }
     if (UNLIKELY(OutputCancel(field))) {
@@ -403,18 +456,10 @@ void ChessProblem::SolverThread(chessproblem::Result *result,
   if (SingleThreadedMode()) {  // Only a shortcut
     return;
   }
-  if (!threads.empty()) {  // We had started subthreads since my_begin
-    for (auto& t : threads) {
-      t.join();
-    }
-    if (!partial_list) {  // We are responsible for the whole list.
-      // Then the whole list was processed, and we can free the resources
-      LockGuard lock(processed_moves_mutex_);
-      processed_moves_.erase(moves);
-      return;  // A shortcut, because we are not at the end of a subthread
-    }
+  for (auto& t : threads) {
+    t.join();
   }
-  if (partial_list) {  // We are at the end of a subthread
+  if (subthread) {  // We are at the end of a subthread
     delete field;
     DecreaseThreads();
   }

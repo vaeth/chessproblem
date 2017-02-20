@@ -328,7 +328,7 @@ static void SplitString(vector<string> *res, const string& str) {
 }
 
 bool ChessProblemDemo::Output(chess::Field *field) const {
-  auto num = num_solutions_found_;
+  auto num = get_num_solutions_found();
   format::Say("Solution %s: %s")
     % num
     % field->get_move_stack();
@@ -348,11 +348,17 @@ bool ChessProblemDemo::Progress(const chess::MoveList *moves,
       return true;
     }
   }
-  format::Format(progress_io_, "%s%s %s to check: %s", true, true)
+  if (UNLIKELY(level == 0)) {
+    format::Format(progress_io_, "%s%s start moves to check: %s", true, true)
+      % (*field)
+      % moves->size()
+      % field->str(*moves);
+    return true;
+  }
+  format::Format(progress_io_, "%s%s replies to %s to check: %s", true, true)
     % (*field)
     % moves->size()
-    % ((level == 0) ? std::string("start moves") :
-       (format::Format("replies to %s") % move_stack).str())
+    % move_stack
     % field->str(*moves);
   return true;
 }
@@ -379,7 +385,7 @@ bool ChessProblemDemo::Progress(const chess::Move *my_move,
   if (LIKELY(level > 1)) {
     return true;
   }
-  if (level != 0) {
+  if (LIKELY(level != 0)) {
     format::Format(progress_io_, "Checking %s %s", true, true)
       % move_stack
       % field->str(*my_move);

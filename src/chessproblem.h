@@ -12,9 +12,8 @@
 #include <cassert>
 
 #ifndef NO_CHESSPROBLEM_THREADS
-#include <map>
+#include <atomic>
 #include <mutex>  // NOLINT(build/c++11)
-#include <set>
 #endif
 
 #include "src/chess.h"
@@ -22,7 +21,7 @@
 
 #ifndef NO_CHESSPROBLEM_THREADS
 namespace chessproblem {
-class Result;
+class Communicate;
 }  // namespace chessproblem
 #endif  // NO_CHESSPROBLEM_THREADS
 
@@ -207,18 +206,25 @@ class ChessProblem : public chess::Field {
  protected:
   // When Output() is called, it can access the already updated number
 #ifndef NO_CHESSPROBLEM_THREADS
-  volatile
+  int get_num_solutions_found() const {
+    return num_solutions_found_.load(std::memory_order_consume);
+  }
+#else
+  bool get_num_solutions_found() const {
+    return num_solutions_found_;
+  }
 #endif
-  int num_solutions_found_;
 
  private:
   Mode mode_;
   int half_moves_;
   bool default_color_;
 #ifndef NO_CHESSPROBLEM_THREADS
-  chessproblem::Result *cancel_;
+  chessproblem::Communicate *cancel_;
+  std::atomic_int num_solutions_found_;
 #else
   bool cancel_;
+  int num_solutions_found_;
 #endif
 
   // These values are initialized to avoid recalculation during recursion:
@@ -227,13 +233,8 @@ class ChessProblem : public chess::Field {
 #ifndef NO_CHESSPROBLEM_THREADS
   int max_parallel_, min_half_moves_depth_;
   int max_threads_, new_thread_depth_;
-  volatile int thread_count_;
-  volatile bool have_running_threads_;
-  typedef std::set<const chess::Move *> ProcessedMoves;
-  // This should actually be volatile, but STL does not provide this.
-  // Let us hope that the compiler does not optimize container access away...
-  std::map<const chess::MoveList *, ProcessedMoves> processed_moves_;
-  std::mutex io_mutex_, thread_count_mutex_, processed_moves_mutex_;
+  std::atomic_int thread_count_;
+  std::mutex io_mutex_, thread_count_mutex_;
   typedef std::lock_guard<std::mutex> LockGuard;
 #endif  // NO_CHESSPROBLEM_THREADS
 
@@ -260,12 +261,14 @@ class ChessProblem : public chess::Field {
   ATTRIBUTE_NONNULL_ bool ProgressCancel(const chess::Move *my_move,
       chess::Field *field);
 
-  ATTRIBUTE_NONNULL_ bool RecursiveSolver(chessproblem::Result *result,
+  // The actually recursively called solver function
+  ATTRIBUTE_NONNULL_ bool RecursiveSolver(chessproblem::Communicate *parent,
       chess::Field *field);
 
-  ATTRIBUTE_NONNULL_ void SolverThread(chessproblem::Result *result,
-    const chess::MoveList *moves,
-    const chess::MoveList::const_iterator my_begin, chess::Field *field);
+  // This is the main loop of RecursiveSolver over the chess::MoveList.
+  // It is a separate function so that it can be started as a thread.
+  ATTRIBUTE_NONNULL_ void SolverThread(chessproblem::Communicate *communicate,
+      chess::Field *field);
 
   // If we can produce a new thread, increase number and return true:
   // True means that we _must_ produce a new thread afterwards (or otherwise
@@ -273,28 +276,25 @@ class ChessProblem : public chess::Field {
   // Locks already before reading to make sure to not increase too much!
   ATTRIBUTE_NODISCARD bool IncreaseThreads() {
     LockGuard lock(thread_count_mutex_);
-    auto curr_count = thread_count_;  // local variable to omit volatile access
+    auto curr_count = thread_count_.load(std::memory_order_consume);
     if (curr_count >= max_threads_) {
       return false;
     }
-    thread_count_ = curr_count + 1;
-    return ((have_running_threads_ = true));
+    thread_count_.store(std::memory_order_release);
+    return true;
   }
 
   void DecreaseThreads() {
     LockGuard lock(thread_count_mutex_);
-    if (--thread_count_ == 0) {
-      have_running_threads_ = false;
-    }
+    --thread_count_;
   }
 
   // Return true if currently threads may be running.
   // By its very nature, this information can be outdated.
   // It is guaranteed that if false is returned then no thread is running
-  // (or at least not modifying volatile data or producing any output).
+  // (or at least not doing anymore anything which needs to be synced).
   bool HaveRunningThreads() {
-    // No lock is necessary for reading a bool
-    return have_running_threads_;
+    return (thread_count_.load(std::memory_order_consume) != 0);
   }
 
   bool SingleThreadedMode() {
@@ -317,6 +317,7 @@ class ChessProblem : public chess::Field {
   // Call Progress(). Possibly set cancel_ and return true if cancel_
   ATTRIBUTE_NONNULL_ bool ProgressCancel(const chess::Move *my_move);
 
+  // The actually recursively called solver function
   bool RecursiveSolver();
 
 #endif  // NO_CHESSPROBLEM_THREADS

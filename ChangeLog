@@ -1,5 +1,12 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.1
+	- Rework multithreading strategy:
+	- Use one Communication object common to all equally ranked threads:
+	  No hackish and slow ProcessedMoves data structure is needed anymore
+	- Use std::atomic even for bools which are set only to true: This is
+	  slightly slower on some arches, but also necessary for some arches.
+
 *chessproblem-2.0
 	- Multithreading support. This changes the ChessProblem API:
 	  The Output and Progress functions get a different signature and usage
