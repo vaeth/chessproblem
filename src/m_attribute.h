@@ -40,19 +40,6 @@
 #endif  // HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
 #endif  // HAVE_ATTRIBUTE_NODISCARD
 
-#ifdef HAVE_ATTRIBUTE_MAYBE_UNUSED
-#define ATTRIBUTE_UNUSED [[maybe_unused]]  // NOLINT(whitespace/braces)
-#define UNUSED(p)
-#else
-#ifdef HAVE_ATTRIBUTE_UNUSED
-#define ATTRIBUTE_UNUSED __attribute__ ((unused))
-#define UNUSED(p)
-#else
-#define ATTRIBUTE_UNUSED
-#define UNUSED(p) ((void)(p));
-#endif  // HAVE_ATTRIBUTE_UNUSED
-#endif  // HAVE_TTRIBUTE_MAYBE_UNUSED
-
 #ifdef HAVE_ATTRIBUTE_FALLTHROUGH
 #define ATTRIBUTE_FALLTHROUGH [[fallthrough]];  // NOLINT(whitespace/braces)
 #else

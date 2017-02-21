@@ -65,8 +65,8 @@ static void Help() {
 "\n"
 "Options:\n"
 "-i   Read position from standard input\n"
-"-j X Use up to X parallel threads %s\n"
-"-J X For a new thread require at least X half moves depth %s\n"
+"-j X Use up to X parallel threads%s\n"
+"-J X For a new thread require at least X half moves depth%s\n"
 "-M X Mate in X moves (2X - 1 half moves)\n"
 "-S X Selfmate in X moves (2X half moves)\n"
 "-H X Helpmate in X moves (2X half moves)\n"
@@ -86,7 +86,8 @@ static void Help() {
 "-h   Output this help text and exit") %
 #ifndef NO_CHESSPROBLEM_THREADS
 (format::Format(" (default is %s)") % ChessProblemDemo::kMaxParallelDefault) %
-(format::Format(" (default is %s)") % ChessProblemDemo::kMinHalfMovesDepth);
+(format::Format(" (default is %s)") %
+  ChessProblemDemo::kMinHalfMovesDepthDefault);
 #else
 " (ignored:\n"
 "     program is compiled without threading support)" %

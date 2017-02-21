@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [2.1],
+AC_INIT([chessproblem], [2.2],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -463,44 +463,6 @@ AS_IF([$attr_deprecated],
 		[1],
 		[[Define if __attribute__ ((deprecated("a"))) can be used]])])
 
-# Check if [[maybe_unused]] works
-AC_MSG_CHECKING([[whether [[maybe_unused]] can be used]])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-static int dummy(int i);
-static int
-dummy([[maybe_unused]] int i)
-{ return 0; }
-		]], [[
-return dummy(1);
-		]])],
-		[MV_MSG_RESULT([yes])
-		AS_VAR_SET([attr_maybe_unused], [:])],
-		[MV_MSG_RESULT([no])
-		AS_VAR_SET([attr_maybe_unused], [false])])
-AS_IF([$attr_maybe_unused],
-	[AC_DEFINE([HAVE_ATTRIBUTE_MAYBE_UNUSED],
-		[1],
-		[[Define if [[maybe_unused]] can be used]])])
-
-# Check if __attribute__ ((unused)) works
-AC_MSG_CHECKING([whether __attribute__ ((unused)) can be used])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-static int dummy(int i);
-static int
-dummy(__attribute__ ((unused)) int i)
-{ return 0; }
-		]], [[
-return dummy(1);
-		]])],
-		[MV_MSG_RESULT([yes])
-		AS_VAR_SET([attr_unused], [:])],
-		[MV_MSG_RESULT([no])
-		AS_VAR_SET([attr_unused], [false])])
-AS_IF([$attr_unused],
-	[AC_DEFINE([HAVE_ATTRIBUTE_UNUSED],
-		[1],
-		[Define if __attribute__ ((unused)) can be used])])
-
 # Check if [[noreturn]] works
 AC_MSG_CHECKING([[whether [[noreturn]] can be used]])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
@@ -756,6 +718,42 @@ AS_IF([$support_multithreading],
 		[Define if multithreading is not wanted/possible])
 	AS_VAR_SET([MULTITHREAD_LIBS], [])])
 AC_SUBST([MULTITHREAD_LIBS])
+
+AC_MSG_CHECKING([maximal parallel threads default])
+AC_ARG_WITH([max-parallel-default],
+	[AS_HELP_STRING([--with-max-parallel-default=STR],
+		[default maximal parallel threads])],
+	[AS_VAR_COPY([MAX_PARALLEL_DEFAULT], [withval])],
+	[AS_VAR_SET([MAX_PARALLEL_DEFAULT], [])])
+MV_MSG_RESULT_VAR([MAX_PARALLEL_DEFAULT])
+MV_IF_NONEMPTY([$MAX_PARALLEL_DEFAULT],
+	[AC_DEFINE_UNQUOTED([MAX_PARALLEL_DEFAULT],
+		[$MAX_PARALLEL_DEFAULT],
+		[default maximal parallel threads if defined])])
+
+AC_MSG_CHECKING([minimal half move depth for a new thread])
+AC_ARG_WITH([min-half-move-depth-default],
+	[AS_HELP_STRING([--with-min-half-move-depth-default=STR],
+		[default minimal half move depth for a new thread])],
+	[AS_VAR_COPY([MIN_HALF_MOVE_DEPTH_DEFAULT], [withval])],
+	[AS_VAR_SET([MIN_HALF_MOVE_DEPTH_DEFAULT], [])])
+MV_MSG_RESULT_VAR([MIN_HALF_MOVE_DEPTH_DEFAULT])
+MV_IF_NONEMPTY([$MIN_HALF_MOVE_DEPTH_DEFAULT],
+	[AC_DEFINE_UNQUOTED([MIN_HALF_MOVE_DEPTH_DEFAULT],
+		[$MIN_HALF_MOVE_DEPTH_DEFAULT],
+		[default minimal half move depth for a new thread if defined])])
+
+AC_MSG_CHECKING([propagate-signal])
+AC_ARG_ENABLE([propagate-signal],
+	[AS_HELP_STRING([--enable-propagate-signal],
+		[use memory intensive (faster?/slower?) thread policy])],
+	[MV_ENABLE([propagate_signal])],
+	[AS_VAR_SET([propagate_signal], [false])])
+MV_MSG_RESULT_BIN([$propagate_signal])
+AS_IF([$propagate_signal],
+	[AC_DEFINE([PROPAGATE_SIGNAL],
+		[1],
+		[Define if memory intensive (faster?/slower?) thread policy should be used])])
 
 # Done!
 AC_OUTPUT()

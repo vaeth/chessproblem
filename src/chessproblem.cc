@@ -14,16 +14,20 @@
 #include <mutex>  // NOLINT(build/c++11)
 #include <thread>  // NOLINT(build/c++11)
 #include <vector>
+#ifdef PROPAGATE_SIGNAL
+#include <list>
+#endif
 #endif
 
 #include "src/m_attribute.h"
 #include "src/m_likely.h"
 
-const int
-  ChessProblem::kMaxParallelDefault,
-  ChessProblem::kMinHalfMovesDepth;
 
 #ifndef NO_CHESSPROBLEM_THREADS
+const int
+  ChessProblem::kMaxParallelDefault,
+  ChessProblem::kMinHalfMovesDepthDefault;
+
 namespace chessproblem {
 
 // For each MoveList, one Communicate object is created.
@@ -32,6 +36,15 @@ namespace chessproblem {
 // In order to receive a signal from parent MoveLists, we collect all objects
 // as a tree (with "inverse" pointers from childs to parents only).
 // The "root" of that tree (to which all nodes eventually point to) is *cancel_
+
+// kill signals propagate to all childs.
+// By default, childs check all its parents which is relatively expensive,
+// because this query happens regularly.
+// If kill signals are assumed to be rare, it may be cheaper to propagate
+// them to all chilren. However, in this case the parent must have a list of
+// all its children which is a memory overhead and also needs time for
+// bookkeeping, no matter whether signals occur or not.
+// When PROPAGATE_SIGNAL is defined, we use this memory expensive strategy.
 
 class Communicate {
  private:
@@ -44,10 +57,43 @@ class Communicate {
   std::atomic_bool result_;
   std::mutex current_mutex_;
   typedef std::lock_guard<std::mutex> LockGuard;
+#ifdef PROPAGATE_SIGNAL
+  std::mutex children_mutex_;
+  typedef std::list<Communicate *> ChildList;
+  ChildList children_;
+  ChildList::iterator my_entry;
+
+  void RegisterChild() {
+    Communicate *parent;
+    if (UNLIKELY((parent = parent_) == nullptr)) {
+      return;
+    }
+    { LockGuard lock(children_mutex_);
+      ChildList& parent_list = parent->children_;
+      parent_list.emplace_front(this);
+      my_entry = parent_list.begin();
+    }
+    // For the unlikely case that we were locked while a signal propagated,
+    // we must fetch it on our own:
+    if (UNLIKELY(parent->kill_signal_.load(std::memory_order_consume))) {
+      kill_signal_ = true;
+    }
+  }
+#else
+  void RegisterChild() {
+  }
+#endif
 
  public:
+  // Not copyable/movable due to parent pointer of children
+  Communicate& operator=(const Communicate&) = delete;
+  Communicate& operator=(const Communicate&&) = delete;
+  Communicate(const Communicate&) = delete;
+  Communicate(const Communicate&&) = delete;
+
   explicit Communicate(Communicate *parent) :
     parent_(parent), equal_level_threads_(false), kill_signal_(false) {
+    RegisterChild();
   }
 
   ATTRIBUTE_NONNULL_ explicit Communicate(Communicate *parent,
@@ -55,7 +101,19 @@ class Communicate {
     parent_(parent), equal_level_threads_(false), kill_signal_(false),
     moves_(moves), current_(moves->begin()), end_(moves->end()),
     result_(result) {
+    RegisterChild();
   }
+
+#ifdef PROPAGATE_SIGNAL
+  ~Communicate() {
+    Communicate *parent;
+    if (UNLIKELY((parent = parent_) == nullptr)) {
+      return;
+    }
+    LockGuard lock(children_mutex_);
+    parent->children_.erase(my_entry);
+  }
+#endif
 
   ATTRIBUTE_NODISCARD bool get_equal_level_threads() {
     return equal_level_threads_;
@@ -120,10 +178,19 @@ class Communicate {
   // Signal kill to current thread and all descendants
   void Kill() {
     kill_signal_.store(true, std::memory_order_release);
+#ifdef PROPAGATE_SIGNAL
+    LockGuard lock(children_mutex_);
+    for (auto& child : children_) {
+      child->Kill();
+    }
+#endif
   }
 
   // Has current thread or some of its parents received a signal?
   bool GotSignal() const {
+#ifdef PROPAGATE_SIGNAL
+    return kill_signal_.load(std::memory_order_consume);
+#else
     for (const Communicate *curr(this); LIKELY(curr != nullptr);
       curr = curr->parent_) {
       if (UNLIKELY(curr->kill_signal_.load(std::memory_order_consume))) {
@@ -131,6 +198,7 @@ class Communicate {
       }
     }
     return false;
+#endif
   }
 
   // As GotSignal() but faster if we know that there are no parents
@@ -180,17 +248,18 @@ int ChessProblem::Solve() {
   }
   chessproblem::Communicate kill_childs(nullptr);
   RecursiveSolver((cancel_ = &kill_childs), this);
-  return num_solutions_found_.load(std::memory_order_acquire);
 #else
   num_solutions_found_ = 0;
   cancel_ = false;
   RecursiveSolver();
-  return num_solutions_found_;
 #endif
+  return get_num_solutions_found();
 }
 
 #ifndef NO_CHESSPROBLEM_THREADS
 
+// In the non-threading code, we use the same macros which ignore "a".
+// Without these macros, we would need too many ifdef's or duplicate code...
 #define OUTPUT_CANCEL(a) OutputCancel(a)
 #define GENERATOR(a, b) a->Generator(b)
 #define IS_IN_CHECK(a) a->IsInCheck()
@@ -204,11 +273,13 @@ bool ChessProblem::OutputCancel(chess::Field *field) {
     if (UNLIKELY(cancel_->TopSignal())) {
       return true;
     }
-    ++num_solutions_found_;
+    // We have a lock and increase only here: atomicity is not required
+    increase_num_solutions_found_nonatomic();
     if (LIKELY(Output(field))) {
       return false;
     }
-    // It is important to set cancel_ while we have the lock
+    // It is important to set cancel_ while we have the lock:
+    // We must make sure to produce no further output
     cancel_->Kill();
     return true;
   }
@@ -216,7 +287,8 @@ bool ChessProblem::OutputCancel(chess::Field *field) {
     // Another thread has caused a cancel_, but meanwhile all threads finished
     return true;
   }
-  ++num_solutions_found_;
+  // Without threads, atomicity is not required:
+  increase_num_solutions_found_nonatomic();
   if (LIKELY(Output(field))) {
     return false;
   }
@@ -236,7 +308,8 @@ bool ChessProblem::ProgressCancel(const chess::MoveList *moves,
     if (LIKELY(Progress(moves, field))) {
       return false;
     }
-    // It is important to set cancel_ while we have the lock
+    // It is important to set cancel_ while we have the lock:
+    // We must make sure to produce no further output
     cancel_->Kill();
     return true;
   }
@@ -263,7 +336,8 @@ bool ChessProblem::ProgressCancel(const chess::Move *my_move,
     if (LIKELY(Progress(my_move, field))) {
       return false;
     }
-    // It is important to set cancel_ while we have the lock
+    // It is important to set cancel_ while we have the lock:
+    // We must make sure to produce no further output
     cancel_->Kill();
     return true;
   }
@@ -280,6 +354,8 @@ bool ChessProblem::ProgressCancel(const chess::Move *my_move,
 
 #else  // defined(NO_CHESSPROBLEM_THREADS)
 
+// In the threading code, we use the same macros which deal with "a".
+// Without these macros, we would need too many ifdef's or duplicate code...
 #define OUTPUT_CANCEL(a) OutputCancel()
 #define GENERATOR(a, b) Generator(b)
 #define IS_IN_CHECK(a) IsInCheck()

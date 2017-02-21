@@ -9,9 +9,6 @@
 /* Define if [[fallthrough]] can be used */
 #undef HAVE_ATTRIBUTE_FALLTHROUGH
 
-/* [Define if [[maybe_unused]] can be used] */
-#undef HAVE_ATTRIBUTE_MAYBE_UNUSED
-
 /* [Define if [[nodiscard]] can be used] */
 #undef HAVE_ATTRIBUTE_NODISCARD
 
@@ -26,9 +23,6 @@
 
 /* Define if __attribute__ ((pure)) can be used */
 #undef HAVE_ATTRIBUTE_PURE
-
-/* Define if __attribute__ ((unused)) can be used */
-#undef HAVE_ATTRIBUTE_UNUSED
 
 /* Define if __attribute__ ((warn_unused_result)) can be used */
 #undef HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
@@ -69,6 +63,12 @@
 /* Define if __builtin_expect can be used */
 #undef HAVE___BUILTIN_EXPECT
 
+/* default maximal parallel threads if defined */
+#undef MAX_PARALLEL_DEFAULT
+
+/* default minimal half move depth for a new thread if defined */
+#undef MIN_HALF_MOVE_DEPTH_DEFAULT
+
 /* Define if multithreading is not wanted/possible */
 #undef NO_CHESSPROBLEM_THREADS
 
@@ -92,6 +92,10 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define if memory intensive (faster?/slower?) thread policy should be used
+   */
+#undef PROPAGATE_SIGNAL
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

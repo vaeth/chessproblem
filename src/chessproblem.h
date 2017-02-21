@@ -35,7 +35,7 @@ and override the corresponding functions.
 
 The Output() function is called for any found solution; if its return value
 is false, the solver is canceled and does not look for further solutions.
-The Output() function gets passed the ChessField as the "field" argument.
+The Output() function gets passed the ChessField as an argument.
 (As an implicit argument it also inherits a ChessField as a base class.
 In multi-threaded mode, the latter should not be used, since it does not
 necessarily correspond to the currently running thread. In single-threaded
@@ -49,7 +49,7 @@ general remarks hold as for the Output() function.
 While the Output() and Progress() functions are called, a mutex is locked
 in multithreaded mode, so you can do any output without having to fear
 that it is mixed with the output of other threads.
-Note that these functions can output the passed "field" (and move-list/move).
+Note that these functions can output the passed ChessField (and MoveList/Move).
 Note that in order to show the position after a move, the function can use
 field->PushMove (then output) followed by field->PopMove.
 Note also that for a correct output of the move (including figure name),
@@ -67,9 +67,8 @@ class ChessProblem : public chess::Field {
   // For HelpMate the full path is on the stack (of the passed &field)
   // when Output() is called;for Mate and SelfMate only the first move
   // is on the stack.
-  ATTRIBUTE_NODISCARD ATTRIBUTE_NONNULL_ virtual bool Output(ATTRIBUTE_UNUSED
-      chess::Field *field) const {
-    UNUSED(field)
+  ATTRIBUTE_NODISCARD ATTRIBUTE_NONNULL_ virtual bool Output(
+      chess::Field *) const {
     return true;
   }
 
@@ -79,9 +78,7 @@ class ChessProblem : public chess::Field {
   // Also this function can cancel the whole process by returning false.
   // The default implementation only returns true.
   ATTRIBUTE_NODISCARD ATTRIBUTE_NONNULL_ virtual bool Progress(
-      ATTRIBUTE_UNUSED const chess::MoveList *moves,
-      ATTRIBUTE_UNUSED chess::Field *field) const {
-    UNUSED(level) UNUSED(moves) UNUSED(field)
+      const chess::MoveList *, chess::Field *) const {
     return true;
   }
 
@@ -92,30 +89,44 @@ class ChessProblem : public chess::Field {
   // Also this function can cancel the whole process by returning false.
   // The default implementation only returns true.
   ATTRIBUTE_NODISCARD ATTRIBUTE_NONNULL_ virtual bool Progress(
-      ATTRIBUTE_UNUSED const chess::Move *my_move,
-      ATTRIBUTE_UNUSED chess::Field *field) const {
-    UNUSED(level) UNUSED(my_move) UNUSED(field)
+      const chess::Move *, chess::Field *) const {
     return true;
   }
 
  public:
   enum Mode { kUnknown, kMate, kSelfMate, kHelpMate };
 
+#ifndef NO_CHESSPROBLEM_THREADS
   constexpr static const int
-    kMaxParallelDefault = 1,
-    kMinHalfMovesDepth = 5;
+    kMaxParallelDefault =
+#ifdef MAX_PARALLEL_DEFAULT
+      MAX_PARALLEL_DEFAULT,
+#else
+      1,
+#endif
+    kMinHalfMovesDepthDefault =
+#ifdef MIN_HALF_MOVE_DEPTH_DEFAULT
+      MIN_HALF_MOVE_DEPTH_DEFAULT;
+#else
+      5;
+#endif
+#endif  // NO_CHESSPROBLEM_THREADS
 
   ChessProblem() :
     chess::Field(), mode_(kUnknown), half_moves_(0), default_color_(true) {
+#ifndef NO_CHESSPROBLEM_THREADS
     set_max_parallel(kMaxParallelDefault);
-    set_min_half_moves_depth(kMinHalfMovesDepth);
+    set_min_half_moves_depth(kMinHalfMovesDepthDefault);
+#endif
   }
 
   ChessProblem(Mode mode, int moves) :
     chess::Field(), default_color_(true) {
     set_mode(mode, moves);
+#ifndef NO_CHESSPROBLEM_THREADS
     set_max_parallel(kMaxParallelDefault);
-    set_min_half_moves_depth(kMinHalfMovesDepth);
+    set_min_half_moves_depth(kMinHalfMovesDepthDefault);
+#endif
   }
 
   // Better make a virutal destructor, since we expect inheritance.
@@ -181,20 +192,23 @@ class ChessProblem : public chess::Field {
 
 #else  // defined(NO_CHESSPROBLEM_THREADS)
 
-  void set_max_parallel(ATTRIBUTE_UNUSED int max_parallel) {
-    UNUSED(max_parallel)
+  void set_max_parallel(int) {
   }
 
   ATTRIBUTE_NODISCARD int get_max_parallel() {
     return 1;
   }
 
-  void set_min_half_moves_depth(ATTRIBUTE_UNUSED int min_half_moves_depth) {
-    UNUSED(min_half_moves_depth)
+  void set_min_half_moves_depth(int) {
   }
 
+  // No return value makes any sense with defined NO_CHESSPROBLEM_THREADS.
+  // We return a negative value so that the user can use this as a "runtime"
+  // check whether NO_CHESSPROBLEM_THREADS is enabled for the library to avoid
+  // writing code in both cases.
+  // However, he should better check NO_CHESSPROBLEM_THREADS directly.
   ATTRIBUTE_NODISCARD int get_min_half_moves_depth() const {
-    return kMinHalfMovesDepth;
+    return -1;
   }
 
 #endif  // NO_CHESSPROBLEM_THREADS
@@ -246,6 +260,11 @@ class ChessProblem : public chess::Field {
   }
 
 #ifndef NO_CHESSPROBLEM_THREADS
+  // Possibly non-locked faster version of ++num_solutions_found_
+  void increase_num_solutions_found_nonatomic() {
+    num_solutions_found_.store(num_solutions_found_.load(
+      std::memory_order_consume) + 1, std::memory_order_release);
+  }
 
   // Increase num_solutions_found, call Output() thread-safe.
   // Possibly set cancel_ and return true if cancel_
@@ -284,9 +303,15 @@ class ChessProblem : public chess::Field {
     return true;
   }
 
+  // Decreases with locked thread_count_mutex_ to be sure to not interfere
+  // with IncreaseThreads(). (If we would use atomic increase in
+  // IncreaseThreads, we could just atomically decrease here, but this would
+  // also trigger two locks, probably).
   void DecreaseThreads() {
     LockGuard lock(thread_count_mutex_);
-    --thread_count_;
+    // Possibly avoid a further lock by an atomic --thread_count_:
+    thread_count_.store(thread_count_.load(std::memory_order_consume) - 1,
+      std::memory_order_release);
   }
 
   // Return true if currently threads may be running.
@@ -294,7 +319,10 @@ class ChessProblem : public chess::Field {
   // It is guaranteed that if false is returned then no thread is running
   // (or at least not doing anymore anything which needs to be synced).
   bool HaveRunningThreads() {
-    return (thread_count_.load(std::memory_order_consume) != 0);
+    // By the implementation/usage of IncreaseThreads()/DecreaseThreads()
+    // it should not be possible that the count ever gets negative, but
+    // it might even be faster on some arches to do the more reliable test:
+    return (thread_count_.load(std::memory_order_consume) > 0);
   }
 
   bool SingleThreadedMode() {

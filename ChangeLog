@@ -1,5 +1,15 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.2
+	- Support --enable-propagate-signal: This is a different inter-thread
+	  communication strategy which needs more memory and might perhaps be
+	  faster, but can also be slower. It is a good strategy if there are
+	  many bad last moves to try before a "winning" one is found.
+	- ./configure --with-max-parallel-default=...
+	- ./configure ----with-min-half-move-depth-default=...
+	- Micro-optimization: avoid atomic locks where unneeded
+	- Cleanup code: Avoid compiler UNUSED magic/attributes
+
 *chessproblem-2.1
 	- Rework multithreading strategy:
 	- Use one Communication object common to all equally ranked threads:
