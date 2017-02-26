@@ -1,5 +1,14 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.3
+	- Rename PushGuard->push_guard and PushGuardDisarmable->unique_push
+	  in analogy to std::lock_guard and std::unique_lock.
+	  Rename also member functions similarly.
+	- Fix in push_guard and unique_push: Make accessors const, fix moving
+	- Make move assignment/constructor of Field faster (previously, it was
+	  actually copied due to my misunderstanding of the C++11 standard).
+	- Provide explicit Field::assign()
+
 *chessproblem-2.2
 	- Support --enable-propagate-signal: This is a different inter-thread
 	  communication strategy which needs more memory and might perhaps be

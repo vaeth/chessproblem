@@ -15,6 +15,7 @@
 #include <deque>
 #include <list>
 #include <string>
+#include <utility>  // move
 #include <vector>
 
 #include "src/m_attribute.h"
@@ -696,8 +697,6 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     return pos;
   }
 
-  void clear();
-
   // After the following, no PopMove() is necessary/possible anymore.
   void ClearStack() {
     move_stack_.clear();
@@ -707,6 +706,12 @@ note that it is "on head" concerning the moves and mirrored concerning columns
     return move_stack_;
   }
 
+  void clear();
+
+  void assign(const Field& f);
+
+  void assign(Field&& f);
+
   Field() {
     ClearField();
   }
@@ -715,16 +720,22 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // because we need to fixup refs_ to point to the copied/moved iterators.
 
   Field(const Field& f) {
-    *this = f;
+    assign(f);
   }
 
-  Field(const Field&& f) {
-    *this = f;
+  Field(Field&& f) {
+    assign(std::move(f));
   }
 
-  Field& operator=(const Field& f);
+  Field& operator=(const Field& f) {
+    assign(f);
+    return *this;
+  }
 
-  Field& operator=(const Field&& f);
+  Field& operator=(Field&& f) {
+    assign(std::move(f));
+    return *this;
+  }
 
  private:
   typedef PosList::iterator Pointer;
@@ -795,64 +806,69 @@ inline static std::ostream& operator<<(std::ostream& os, const Field& f) {
 // When the object goes out of scope the move is popped.
 // It is the user's responsibility to ensure that the field is available in
 // the latter moment!
-// The object is non-copyable (though you might create a copy by using
-// get_field() to read the original field. But this would mean that two moves
+// The object is non-copyable/movable (though you might create a copy by using
+// get() to read the original field. But this would mean that two moves
 // are popped when both objects go out of scope).
 // For special usage it is also possible to move the underlying field with
-// set_field(field), but field must not be nullptr.
+// set(field), but field must not be nullptr.
 // When you want a possibility to "disarm" the Guard where field may be nullptr
 // use the slightly more expensive subsequent class.
 
-class PushGuard {
+class push_guard {
  public:
-  ATTRIBUTE_NONNULL_ PushGuard(Field *field, const Move *my_move) :
+  ATTRIBUTE_NONNULL_ push_guard(Field *field, const Move *my_move) :
     field_(field) {
     field->PushMove(my_move);
   }
 
-  ATTRIBUTE_NONNULL_ explicit PushGuard(Field *field) :
+  ATTRIBUTE_NONNULL_ explicit push_guard(Field *field) :
     field_(field) {
   }
 
-  ATTRIBUTE_NODISCARD Field *get_field() {
+  ATTRIBUTE_NODISCARD Field *get() const {
     return field_;
   }
 
-  ATTRIBUTE_NONNULL_ void set_field(Field *field) {
+  ATTRIBUTE_NONNULL_ void set(Field *field) {
     field_ = field;
   }
 
-  ~PushGuard() {
+  ~push_guard() {
     field_->PopMove();
   }
 
-  PushGuard(const PushGuard& g) = delete;
-  PushGuard& operator=(const PushGuard& g) = delete;
+  push_guard(const push_guard& g) = delete;
+  push_guard& operator=(const push_guard& g) = delete;
+  push_guard(push_guard&& g) = delete;
+  push_guard& operator=(push_guard&& g) = delete;
 
  private:
   Field *field_;
 };
 
 // This is a more expensive disarmable variant of the previous class.
+// It is non-copyable but movable.
 // For this class field can be a nullptr, and in this case no PopMove is called
 // when the object leaves the scope.
+// The pointer can be set explicitly or implicitly using reset() and release()
+// analogously to std::unique_ptr.
 // There is also a default constructor (without arguments) which produces the
-// object in this disarmed state. You can arm it later by calling
-// set_field(field) (possibly followed by PushMove(move)) or by
-// PushMove(field, move) (to do both simultaneously).
+// object in the disarmed state. You can arm it later by calling
+// set(field) or (slower) reset(field) (possibly followed by PushMove(move))
+// or by PushMove(field, move) (to do both simultaneously).
 
-class PushGuardDisarmable {
+class unique_push {
  public:
-  PushGuardDisarmable() :
+  unique_push() :
     field_(nullptr) {
   }
 
-  ATTRIBUTE_NONNULL_ PushGuardDisarmable(Field *field, const Move *my_move) :
+  ATTRIBUTE_NONNULL_ unique_push(Field *field, const Move *my_move) :
     field_(field) {
     field->PushMove(my_move);
   }
 
-  explicit PushGuardDisarmable(Field *field) :
+  explicit unique_push(Field *field) :
     field_(field) {
   }
 
@@ -866,27 +882,48 @@ class PushGuardDisarmable {
     field_->PushMove(my_move);
   }
 
-  ATTRIBUTE_NODISCARD Field *get_field() {
+  ATTRIBUTE_NODISCARD Field *get() const {
     return field_;
   }
 
-  void set_field(Field *field) {
+  void set(Field *field) {
     field_ = field;
   }
 
-  ~PushGuardDisarmable() {
+  Field *release() {
+    Field *ret(field_);
+    field_ = nullptr;
+    return ret;
+  }
+
+  void reset(Field *field) {
+    if (field_ != nullptr) {
+      field_->PopMove();
+    }
+    field_ = field;
+  }
+
+  ~unique_push() {
     if (field_ != nullptr) {
       field_->PopMove();
     }
   }
 
-  PushGuardDisarmable(const PushGuardDisarmable& g) = delete;
-  PushGuardDisarmable& operator=(const PushGuardDisarmable& g) = delete;
+  unique_push(const unique_push& g) = delete;
+  unique_push& operator=(const unique_push& g) = delete;
+
+  unique_push(unique_push&& g) {
+    field_ = g.release();
+  }
+
+  unique_push& operator=(unique_push&& g) {
+    field_ = g.release();
+    return *this;
+  }
 
  private:
   Field *field_;
 };
-
 
 }  // namespace chess
 

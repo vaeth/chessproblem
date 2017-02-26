@@ -451,7 +451,7 @@ bool ChessProblem::RecursiveSolver() {
     }
     PushMove(current_move);
     int opponent(RecursiveSolver());
-    chess::PushGuard push_guard(this);  // Postpone PopMove() to after Output
+    chess::push_guard guard(this);  // Postpone PopMove() to after Output
     if (UNLIKELY(cancel_)) {
       return true;
     }
@@ -465,7 +465,7 @@ bool ChessProblem::RecursiveSolver() {
     // This is the only pruning we can do: We need not check after winning
     // (except when in the top level so that we find cooks).
     if (LIKELY(get_move_stack().size() != 1)) {
-      // We are at top level (note that push_guard still exists!)
+      // We are at top level (note that guard still exists!)
       return true;
     }
     if (UNLIKELY(OutputCancel())) {
@@ -509,7 +509,7 @@ void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
     }
     field->PushMove(current_move);
     bool opponent(RecursiveSolver(communicate, field));
-    chess::PushGuard push_guard(field);  // Postpone field->PopMove()
+    chess::push_guard guard(field);  // Postpone field->PopMove()
     if (cancel_->TopSignal()) {
       break;
     }
@@ -521,7 +521,7 @@ void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
     // This is the only pruning we can do: We need not check after winning
     // (except when in the top level so that we find cooks).
     if (LIKELY(field->get_move_stack().size() != 1)) {
-      // We are at top level (note that push_guard still exists!)
+      // We are at top level (note that guard still exists!)
       communicate->Kill();
       break;
     }
