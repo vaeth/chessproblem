@@ -1,5 +1,8 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.4
+	- Speed up multithreading by avoiding superfluous waits when pruning
+
 *chessproblem-2.3
 	- Rename PushGuard->push_guard and PushGuardDisarmable->unique_push
 	  in analogy to std::lock_guard and std::unique_lock.

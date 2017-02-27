@@ -532,12 +532,18 @@ void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
   if (SingleThreadedMode()) {  // Only a shortcut
     return;
   }
-  for (auto& t : threads) {
-    t.join();
-  }
   if (subthread) {  // We are at the end of a subthread
     delete field;
-    DecreaseThreads();
+    DecreaseThreads();  // We might be not ready, but we will only wait
+  }
+  if (communicate->GotSignal()) {
+    for (auto& t : threads) {  // No need to wait for exiting threads
+      t.detach();
+    }
+  } else {
+    for (auto& t : threads) {
+      t.join();
+    }
   }
 }
 #endif  // NO_CHESSPROBLEM_THREADS
