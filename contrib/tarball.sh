@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 set -u
 
-project='chessproblem'
 mkmake='contrib/make.sh'
 make_opts='-oGeq'
 
@@ -62,9 +61,8 @@ do	opt=${1#-}
 done
 [ -z "${dist:++}" ] && Usage
 
-if [ -n "${mkclean:++}" ]
-then test -e Makefile || test -e configure || test -e Makefile.in \
-	&& test -e "$mkclean" && Run "$mkclean"
+if test -e Makefile || test -e configure || test -e Makefile.in
+then	Run make autoclean
 fi
 
 unset LDFLAGS CFLAGS CXXFLAGS CPPFLAGS
@@ -78,12 +76,10 @@ do	Run $docmd "$i"
 done
 
 found=false
-for j in tar.xz tar.bz2 tar.gz zip
-do	for i in "$PWD/$project"-*".$j"
-	do	test -f "$i" || continue
-		$found || Echo "Available tarballs:"
-		found=:
-		Echo "	$i"
-	done
+for i in *.tar.xz *.tar.bz2 *.tar.gz *.zip
+do	test -f "$i" || continue
+	$found || Echo "Available tarballs:"
+	found=:
+	Echo "	$i"
 done
 $found || Die "For some reason no tarball was created"

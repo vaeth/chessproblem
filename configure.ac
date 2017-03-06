@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [2.4],
+AC_INIT([chessproblem], [2.5],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -23,9 +23,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET()
 
 AM_MAINTAINER_MODE()
-AM_INIT_AUTOMAKE([no-dependencies])
-# disable --disable-silent-rules to omit useless output with Gentoo's EAPI=5:
-AS_VAR_SET([enable_silent_rules], [yes])
+AM_INIT_AUTOMAKE()
 AM_SILENT_RULES([yes])
 
 AC_LANG([C++])
@@ -707,7 +705,8 @@ static void f(int i) {
 	return ret.load(std::memory_order_consume);
 		]])],
 	[],
-	[AS_VAR_SET([support_multithreading], [false])])])
+	[AS_VAR_SET([support_multithreading], [false])])
+AS_VAR_COPY([LDFLAGS], [saveldflags])])
 AS_IF([$support_multithreading],
 	[MV_MSG_RESULT([yes])],
 	[MV_MSG_RESULT([no])
@@ -754,6 +753,30 @@ AS_IF([$propagate_signal],
 	[AC_DEFINE([PROPAGATE_SIGNAL],
 		[1],
 		[Define if memory intensive (faster?/slower?) thread policy should be used])])
+
+AC_MSG_CHECKING([whether osformat can be used])
+AS_VAR_SET([have_osformat], [false])
+m4_ifdef([PKG_CHECK_MODULES],
+	[PKG_CHECK_MODULES([OSFORMAT], [osformat],
+		[AS_VAR_SET([have_osformat], [:])])])
+AS_IF([$have_osformat],
+	[MV_MSG_RESULT([yes])],
+	[AS_VAR_SET([OSFORMAT_LIBS], ["-losformat"])
+	AS_VAR_SET([OSFORMAT_CFLAGS], ["-I/usr/include/osformat"])
+	MV_APPEND([CXXFLAGS], [$OSFORMAT_CFLAGS])
+	MV_APPEND([LDFLAGS], [$OSFORMAT_LIBS])
+	MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+#include <osformat>
+	]], [[
+Format("%.*s") % 2 % 1;
+		]])],
+		[MV_MSG_RESULT([yes], [using guessed paths])],
+		[AC_ERROR(["osformat is not installed or cannot be used.
+Perhaps pkgconf/pkgconfig is not available or not configured correctly.
+Or perhaps https://github.com/vaeth/osformat is not installed.
+This is required to build the executable demo program"])])])
+AC_SUBST([OSFORMAT_LIBS])
+AC_SUBST([OSFORMAT_CFLAGS])
 
 # Done!
 AC_OUTPUT()

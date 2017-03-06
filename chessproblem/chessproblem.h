@@ -4,8 +4,8 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#ifndef SRC_CHESSPROBLEM_H_
-#define SRC_CHESSPROBLEM_H_ 1
+#ifndef CHESSPROBLEM_CHESSPROBLEM_H_
+#define CHESSPROBLEM_CHESSPROBLEM_H_ 1
 
 #include <config.h>
 
@@ -16,8 +16,8 @@
 #include <mutex>  // NOLINT(build/c++11)
 #endif
 
-#include "src/chess.h"
-#include "src/m_attribute.h"
+#include "chessproblem/chess.h"
+#include "chessproblem/m_attribute.h"
 
 #ifndef NO_CHESSPROBLEM_THREADS
 namespace chessproblem {
@@ -112,16 +112,16 @@ class ChessProblem : public chess::Field {
 #endif
 #endif  // NO_CHESSPROBLEM_THREADS
 
-  ChessProblem() :
-    chess::Field(), mode_(kUnknown), half_moves_(0), default_color_(true) {
+  ChessProblem()
+    : chess::Field(), mode_(kUnknown), half_moves_(0), default_color_(true) {
 #ifndef NO_CHESSPROBLEM_THREADS
     set_max_parallel(kMaxParallelDefault);
     set_min_half_moves_depth(kMinHalfMovesDepthDefault);
 #endif
   }
 
-  ChessProblem(Mode mode, int moves) :
-    chess::Field(), default_color_(true) {
+  ChessProblem(Mode mode, int moves)
+    : chess::Field(), default_color_(true) {
     set_mode(mode, moves);
 #ifndef NO_CHESSPROBLEM_THREADS
     set_max_parallel(kMaxParallelDefault);
@@ -351,4 +351,4 @@ class ChessProblem : public chess::Field {
 #endif  // NO_CHESSPROBLEM_THREADS
 };
 
-#endif  // SRC_CHESSPROBLEM_H_
+#endif  // CHESSPROBLEM_CHESSPROBLEM_H_

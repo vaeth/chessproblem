@@ -4,7 +4,7 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#include "src/chessproblem.h"
+#include "chessproblem/chessproblem.h"
 #include <config.h>
 
 #include <cassert>
@@ -19,8 +19,8 @@
 #endif
 #endif
 
-#include "src/m_attribute.h"
-#include "src/m_likely.h"
+#include "chessproblem/m_attribute.h"
+#include "chessproblem/m_likely.h"
 
 
 #ifndef NO_CHESSPROBLEM_THREADS
@@ -51,7 +51,6 @@ class Communicate {
   Communicate *parent_;
   bool equal_level_threads_;
   std::atomic_bool kill_signal_;
-  const chess::MoveList *moves_;
   std::atomic<chess::MoveList::const_iterator> current_;
   chess::MoveList::const_iterator end_;
   std::atomic_bool result_;
@@ -97,10 +96,9 @@ class Communicate {
   }
 
   ATTRIBUTE_NONNULL_ explicit Communicate(Communicate *parent,
-      const chess::MoveList *moves, bool result) :
-    parent_(parent), equal_level_threads_(false), kill_signal_(false),
-    moves_(moves), current_(moves->begin()), end_(moves->end()),
-    result_(result) {
+      const chess::MoveList *moves, bool result)
+    : parent_(parent), equal_level_threads_(false), kill_signal_(false),
+    current_(moves->begin()), end_(moves->end()), result_(result) {
     RegisterChild();
   }
 
@@ -236,7 +234,7 @@ int ChessProblem::Solve() {
       // All players "win" always so that we do not cut
       mate_value_ = nomate_value_ = default_return_value_ = true;
   }
-  // format::Print() % str();
+  // osf::Print() % str();
 #ifndef NO_CHESSPROBLEM_THREADS
   num_solutions_found_.store(0, std::memory_order_release);
   thread_count_ = 0;

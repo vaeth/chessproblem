@@ -1,3 +1,8 @@
+
+The binary demo program uses for output the library
+https://github.com/vaeth/osformat
+This must be installed first.
+
 If you received a tarball with the ./configure file, you can use the usual
 GNU type installation procedure:
 
@@ -20,11 +25,10 @@ might or might not be suitable for you...
 Similarly, there exist the commands
 
 ./contrib/tarball.sh
-./contrib/clean.sh
 ./contrib/cpplint
 
-to create a tarball, to clean up all temporary files, or to check all
-source files for google style complience (if you have cpplint.py).
-Finally, when you have compiled "chessproblems" you can run a test suite with
+to create a tarball or to check all source files for google style compliance
+(if you have cpplint.py).
+Finally, when you have compiled "chessproblem" you can run a test suite with
 
-./contrib/test.pl
+./contrib/test.pl [path-to]chessproblem [chessproblem options, e.g. -j4]

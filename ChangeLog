@@ -1,5 +1,13 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.5
+	- Use osformat library instead of a local hack
+	- Restructure autotools stuff and general dir structure slightly
+	- Remove unused moves_ from Communicate class
+	- Replace contrib/clean.sh by a new "make autoclean" target
+	- Fix how contrib/make.sh passes --enable-propage-signal
+	- Document the bug observed only now: a race with -j5 or higher
+
 *chessproblem-2.4
 	- Speed up multithreading by avoiding superfluous waits when pruning
 

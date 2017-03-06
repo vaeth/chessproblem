@@ -60,11 +60,17 @@ which has to be overridden if output is desired.
 The demo program is kept relatively simple:
 
 main.cc     - the main function for initializing and calling the library
-formated.h  - an auxiliary class for formatting strings and I/O
-formated.cc - implementation of the above class
 
 The usage of the demo "chessproblem" is rather elementary and unix style:
 Just the data can be entered over options and arguments (or stdin).
 Then the output is printed, and the program exits.
+Since chessproblem-2.5, the demo program depends for its output on the library
+https://github.com/vaeth/osformat
 
 See "chessproblem -h" for further help.
+
+KNOWN BUGS:
+With 5 or more parallel threads (-j5) there seems to occur some race.
+(This was detected only now, because hundreds of tests with -j4 never showed
+any race; it seems to be coupled with the magic number 5.)
+Hints how to debug or where the race might be are welcome!

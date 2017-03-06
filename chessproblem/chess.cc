@@ -4,7 +4,7 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#include "src/chess.h"
+#include "chessproblem/chess.h"
 #include <config.h>
 
 #include <cassert>
@@ -12,8 +12,8 @@
 #include <string>
 #include <utility>  // move
 
-#include "src/m_attribute.h"
-#include "src/m_likely.h"
+#include "chessproblem/m_attribute.h"
+#include "chessproblem/m_likely.h"
 
 using std::string;
 

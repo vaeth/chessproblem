@@ -5,8 +5,8 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#ifndef SRC_M_ATTRIBUTE_H_
-#define SRC_M_ATTRIBUTE_H_ 1
+#ifndef CHESSPROBLEM_M_ATTRIBUTE_H_
+#define CHESSPROBLEM_M_ATTRIBUTE_H_ 1
 
 #include <config.h>
 
@@ -71,4 +71,4 @@
 #endif
 
 
-#endif  // SRC_M_ATTRIBUTE_H_
+#endif  // CHESSPROBLEM_M_ATTRIBUTE_H_

@@ -4,8 +4,8 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#ifndef SRC_CHESS_H_
-#define SRC_CHESS_H_ 1
+#ifndef CHESSPROBLEM_CHESS_H_
+#define CHESSPROBLEM_CHESS_H_ 1
 
 #include <config.h>
 
@@ -18,7 +18,7 @@
 #include <utility>  // move
 #include <vector>
 
-#include "src/m_attribute.h"
+#include "chessproblem/m_attribute.h"
 
 namespace chess {
 class Field;
@@ -189,8 +189,8 @@ class Move {
   };
   MoveType move_type_;
   Pos from_, to_;
-  Move(MoveType move_type, Pos from, Pos to) :
-    move_type_(move_type), from_(from), to_(to) {
+  Move(MoveType move_type, Pos from, Pos to)
+    : move_type_(move_type), from_(from), to_(to) {
   }
 
   // Append a human readable form of the move
@@ -302,8 +302,8 @@ class MoveStore {
   Castling castling_;
   Figure from_figure_, to_figure_;
   MoveStore(const Move *m, EnPassant ep, Castling c,
-      Figure from_figure, Figure to_figure) :
-    move_(m), ep_(ep), castling_(c), from_figure_(from_figure),
+      Figure from_figure, Figure to_figure)
+    : move_(m), ep_(ep), castling_(c), from_figure_(from_figure),
     to_figure_(to_figure) {
   }
 
@@ -816,13 +816,13 @@ inline static std::ostream& operator<<(std::ostream& os, const Field& f) {
 
 class push_guard {
  public:
-  ATTRIBUTE_NONNULL_ push_guard(Field *field, const Move *my_move) :
-    field_(field) {
+  ATTRIBUTE_NONNULL_ push_guard(Field *field, const Move *my_move)
+    : field_(field) {
     field->PushMove(my_move);
   }
 
-  ATTRIBUTE_NONNULL_ explicit push_guard(Field *field) :
-    field_(field) {
+  ATTRIBUTE_NONNULL_ explicit push_guard(Field *field)
+    : field_(field) {
   }
 
   ATTRIBUTE_NODISCARD Field *get() const {
@@ -859,17 +859,17 @@ class push_guard {
 
 class unique_push {
  public:
-  unique_push() :
-    field_(nullptr) {
+  unique_push()
+    : field_(nullptr) {
   }
 
-  ATTRIBUTE_NONNULL_ unique_push(Field *field, const Move *my_move) :
-    field_(field) {
+  ATTRIBUTE_NONNULL_ unique_push(Field *field, const Move *my_move)
+    : field_(field) {
     field->PushMove(my_move);
   }
 
-  explicit unique_push(Field *field) :
-    field_(field) {
+  explicit unique_push(Field *field)
+    : field_(field) {
   }
 
   ATTRIBUTE_NONNULL_ void PushMove(Field *field, const Move *my_move) {
@@ -927,4 +927,4 @@ class unique_push {
 
 }  // namespace chess
 
-#endif  // SRC_CHESS_H_
+#endif  // CHESSPROBLEM_CHESS_H_

@@ -7,7 +7,7 @@ sub Die {
 }
 if ((!@ARGV) || ($ARGV[0] =~ m{^-})) {
   $0 =~ m{([^/]*)$};
-  Die("Usage: $1 [path-to]chessproblem [chessproblem options]");
+  Die("Usage: $1 [path-to]chessproblem [chessproblem options, e.g. -j4]");
 }
 my $time = time();
 my @result;

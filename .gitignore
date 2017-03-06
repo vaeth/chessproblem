@@ -1,37 +1,49 @@
+# Special project binaries:
+
+/chessproblem-*/
+/chessproblem/chessproblem
 
 # autotools directories:
 /tmp*/
-!/tmpfiles.d/
 /autom4te.cache/
 /config/
 /m4/
-/chessproblem-*/
 
-# autotools/doxygen files:
+# autotools files:
 /ABOUT-NLS
+/a.out
 /aclocal.m4
+/ar-lib
+/compile
 /confdefs.h
+/config.guess
 /config.h
 /config.log
 /config.rpath
 /config.status
+/config.sub
 /configure
 /conftest*
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
 /stamp-h1
-/a.out
-
-/chessproblem
-/src/chessproblem
-
-!/zsh/_chessproblem*.*
-/zsh/_chessproblem
+/test-driver
+/test-suite.log
 
 # General patterns are last:
 !*.in
 !*Makefile.am
+.deps/
+.libs/
 *.dirstamp
 *.exe
+*.la
+*.lo
 *.o
+*.pc
 *.o-*
 *.o.*
 *.obj

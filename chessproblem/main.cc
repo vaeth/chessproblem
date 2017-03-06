@@ -14,11 +14,12 @@
 #include <string>
 #include <vector>
 
-#include "src/chess.h"
-#include "src/chessproblem.h"
-#include "src/formated.h"
-#include "src/m_attribute.h"
-#include "src/m_likely.h"
+#include <osformat.h>
+
+#include "chessproblem/chess.h"
+#include "chessproblem/chessproblem.h"
+#include "chessproblem/m_attribute.h"
+#include "chessproblem/m_likely.h"
 
 using std::string;
 using std::vector;
@@ -50,7 +51,7 @@ ATTRIBUTE_NONNULL_ static void SplitString(vector<string> *res,
     const string& str);
 
 static void Help() {
-  format::Say("Usage: chessproblem [options] white-pieces black-pieces\n"
+  osformat::Say("Usage: chessproblem [options] white-pieces black-pieces\n"
 "Output solutions of a chess problem, including possible cooks.\n"
 "\n"
 "The pieces must be a single string, separated by commas or spaces\n"
@@ -85,8 +86,8 @@ static void Help() {
 "-V   Output version and exit\n"
 "-h   Output this help text and exit") %
 #ifndef NO_CHESSPROBLEM_THREADS
-(format::Format(" (default is %s)") % ChessProblemDemo::kMaxParallelDefault) %
-(format::Format(" (default is %s)") %
+(osformat::Format(" (default is %s)") % ChessProblemDemo::kMaxParallelDefault)
+% (osformat::Format(" (default is %s)") %
   ChessProblemDemo::kMinHalfMovesDepthDefault);
 #else
 " (ignored:\n"
@@ -159,7 +160,7 @@ int main(int argc, char **argv) {
               castling = chess::UnsetCastling(castling,
                 chess::kNoBlackShortCastling);
             } else {
-              format::SayError("Argument %s of -c is not understood") % c;
+              osformat::SayError("Argument %s of -c is not understood") % c;
               std::exit(EXIT_FAILURE);
             }
           }
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
       case 'e':
         eparg = optarg[0];
         if ((eparg < 'a') || (eparg > 'h')) {
-          format::SayError("Argument %s of -e is not understood") % optarg;
+          osformat::SayError("Argument %s of -e is not understood") % optarg;
           std::exit(EXIT_FAILURE);
         }
         break;
@@ -182,7 +183,7 @@ int main(int argc, char **argv) {
         chessproblem.verbose = true;
         break;
       case 'V':
-        format::Say("%s %s") % PACKAGE_NAME % PACKAGE_VERSION;
+        osformat::Say("%s %s") % PACKAGE_NAME % PACKAGE_VERSION;
         std::exit(EXIT_SUCCESS);
         break;
       case 'h':
@@ -195,7 +196,7 @@ int main(int argc, char **argv) {
     }
   }
   if (chessproblem.get_mode() == ChessProblem::kUnknown) {
-    format::SayError("One of the options -M, -S, or -H has to be specified\n"
+    osformat::SayError("One of the options -M, -S, or -H has to be specified\n"
       "Use option -h for help");
     std::exit(EXIT_FAILURE);
   }
@@ -207,20 +208,20 @@ int main(int argc, char **argv) {
   }
   if (optind < argc) {
     if (optind + 2 != argc) {
-      format::SayError(
+      osformat::SayError(
         "Only 0 or 2 arguments are admissible, but %d are specified")
         % (argc - optind);
       std::exit(EXIT_FAILURE);
     }
     if (get_stdin) {
-      format::SayError("With option -i no arguments must be specified");
+      osformat::SayError("With option -i no arguments must be specified");
       std::exit(EXIT_FAILURE);
     }
     PlaceFigures(&chessproblem, chess::kWhite, argv[optind]);
     PlaceFigures(&chessproblem, chess::kBlack, argv[optind + 1]);
   } else {
     if (!get_stdin) {
-      format::Say("Enter the white position in chess notation:");
+      osformat::Say("Enter the white position in chess notation:");
     }
     if (std::cin.eof()) {
       std::exit(EXIT_FAILURE);
@@ -229,7 +230,7 @@ int main(int argc, char **argv) {
     std::getline(std::cin, line);
     PlaceFigures(&chessproblem, chess::kWhite, line);
     if (!get_stdin) {
-      format::Say("Enter the black position in chess notation:");
+      osformat::Say("Enter the black position in chess notation:");
     }
     if (std::cin.eof()) {
       std::exit(EXIT_FAILURE);
@@ -238,15 +239,15 @@ int main(int argc, char **argv) {
     PlaceFigures(&chessproblem, chess::kBlack, line);
   }
   if (!chessproblem.HaveKings()) {
-    format::SayError("There are not white and black kings on the board");
+    osformat::SayError("There are not white and black kings on the board");
     std::exit(EXIT_FAILURE);
   }
   if (!chessproblem.IsEnPassantValid(ep, true)) {
-    format::SayError("Invalid or useless en passant field specified");
+    osformat::SayError("Invalid or useless en passant field specified");
     chess::EnPassantList eps;
     chessproblem.CalcEnPassant(&eps);
     if (eps.empty()) {
-      format::SayError("In the given position no en passant move is possible");
+      osformat::SayError("In the given position no en passant is possible");
     } else {
       string admissible_ep;
       for (auto e : eps) {
@@ -257,7 +258,7 @@ int main(int argc, char **argv) {
         }
         admissible_ep.append(1, letter);
       }
-      format::SayError("Admissible value(s) would be: %s") % admissible_ep;
+      osformat::SayError("Admissible value(s) would be: %s") % admissible_ep;
     }
     std::exit(EXIT_FAILURE);
   }
@@ -266,7 +267,7 @@ int main(int argc, char **argv) {
   chessproblem.set_castling(new_castling);
   int num(chessproblem.Solve());
   if (num == 0) {
-    format::Say("No solution exists");
+    osformat::Say("No solution exists");
   }
   return (num == 1) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
@@ -276,7 +277,7 @@ static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
   vector<string> figures;
   SplitString(&figures, str);
   if (figures.empty()) {
-    format::SayError("No figures of color %s specified")
+    osformat::SayError("No figures of color %s specified")
       % chess::color_name[color];
     std::exit(EXIT_FAILURE);
   }
@@ -291,11 +292,11 @@ static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
       pos = chess::Field::CalcPos(s.substr(1));
     }
     if ((figure == chess::kNoFigure) || (pos == chess::Field::kFieldEnd)) {
-      format::SayError("Figure or placement not understood: %s") % s;
+      osformat::SayError("Figure or placement not understood: %s") % s;
       std::exit(EXIT_FAILURE);
     }
     if (chessproblem->GetFigure(pos) != chess::kEmpty) {
-      format::SayError("Figure was already on this field: %s") % s;
+      osformat::SayError("Figure was already on this field: %s") % s;
       std::exit(EXIT_FAILURE);
     }
     chessproblem->PlaceFigure(chess::ColoredFigure(figure, color), pos);
@@ -305,7 +306,7 @@ static void PlaceFigures(ChessProblem *chessproblem, chess::Figure color,
 static int CheckNum(const char *num, int min_value, char c) {
   int ret(std::atoi(num));
   if (ret < min_value) {
-    format::SayError("Argument %s of -%s should be at least %d")
+    osformat::SayError("Argument %s of -%s should be at least %d")
       % num
       % c
       % min_value;
@@ -330,7 +331,7 @@ static void SplitString(vector<string> *res, const string& str) {
 
 bool ChessProblemDemo::Output(chess::Field *field) const {
   auto num = get_num_solutions_found();
-  format::Say("Solution %s: %s")
+  osformat::Say("Solution %s: %s")
     % num
     % field->get_move_stack();
   return ((max_solutions_ == 0) || (num < max_solutions_));
@@ -350,13 +351,15 @@ bool ChessProblemDemo::Progress(const chess::MoveList *moves,
     }
   }
   if (UNLIKELY(level == 0)) {
-    format::Format(progress_io_, "%s%s start moves to check: %s", true, true)
+    osformat::Format(progress_io_, "%s%s start moves to check: %s",
+      osformat::Special::NewlineFlush())
       % (*field)
       % moves->size()
       % field->str(*moves);
     return true;
   }
-  format::Format(progress_io_, "%s%s replies to %s to check: %s", true, true)
+  osformat::Format(progress_io_, "%s%s replies to %s to check: %s",
+    osformat::Special::NewlineFlush())
     % (*field)
     % moves->size()
     % move_stack
@@ -374,11 +377,13 @@ bool ChessProblemDemo::Progress(const chess::Move *my_move,
   auto level = move_stack.size();
   if (UNLIKELY(verbose)) {
     if (UNLIKELY(level == 0)) {
-      format::Format(progress_io_, "Checking %s", true, true)
+      osformat::Format(progress_io_, "Checking %s",
+        osformat::Special::NewlineFlush())
         % field->str(*my_move);
         return true;
     }
-    format::Format(progress_io_, "Checking %s %s", true, true)
+    osformat::Format(progress_io_, "Checking %s %s",
+      osformat::Special::NewlineFlush())
       % move_stack
       % field->str(*my_move);
     return true;
@@ -387,7 +392,8 @@ bool ChessProblemDemo::Progress(const chess::Move *my_move,
     return true;
   }
   if (LIKELY(level != 0)) {
-    format::Format(progress_io_, "Checking %s %s", true, true)
+    osformat::Format(progress_io_, "Checking %s %s",
+      osformat::Special::NewlineFlush())
       % move_stack
       % field->str(*my_move);
     return true;
@@ -395,7 +401,8 @@ bool ChessProblemDemo::Progress(const chess::Move *my_move,
   field->PushMove(my_move);
   string board(*field);
   field->PopMove();
-  format::Format(progress_io_, "Checking %s\n%s", false, true)
+  osformat::Format(progress_io_, "Checking %s\n%s",
+    osformat::Special::NewlineFlush())
     % field->str(*my_move)
     % board;
   return true;

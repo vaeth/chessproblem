@@ -92,7 +92,7 @@ quiet=false
 dep_default=:
 earlystop=false
 keepenv=false
-propagate_signal=:
+propagate_signal=false
 multithreading=:
 warnings=false
 use_chown=false
@@ -146,7 +146,7 @@ SetCcache
 $multithreading && configure_extra=$configure_extra' --with-multithreading' \
 	|| configure_extra=$configure_extra' --without-multithreading'
 ! $propagate_signal \
-	|| configure_extra=$configure_extra' --with-propagate-signal'
+	|| configure_extra=$configure_extra' --enable-propagate-signal'
 $quiet && quietredirect='>/dev/null' || quietredirect=
 
 if $use_chown

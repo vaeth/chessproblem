@@ -4,8 +4,8 @@
 // Copyright (c)
 //   Martin Väth <martin@mvath.de>
 
-#ifndef SRC_M_LIKELY_H_
-#define SRC_M_LIKELY_H_ 1
+#ifndef CHESSPROBLEM_M_LIKELY_H_
+#define CHESSPROBLEM_M_LIKELY_H_ 1
 
 #include <config.h>
 
@@ -17,4 +17,4 @@
 #define UNLIKELY(x)  (x)
 #endif
 
-#endif  // SRC_M_LIKELY_H_
+#endif  // CHESSPROBLEM_M_LIKELY_H_

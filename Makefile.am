@@ -6,48 +6,66 @@
 
 AUTOMAKE_OPTIONS = foreign 1.11.2 no-dist-gzip dist-xz subdir-objects -Wobsolete -Wportability -Wextra-portability
 
-CLEANFILES = chessproblem
+ACLOCAL_AMFLAGS = -I m4 -I martinm4
 
-chessproblem_SOURCES = \
-src/m_likely.h \
-src/formated.cc \
-src/formated.h \
-src/chess.cc \
-src/chess.h \
-src/chessproblem.cc \
-src/chessproblem.h \
-src/main.cc
+bin_PROGRAMS = chessproblem/chessproblem
 
-bin_PROGRAMS = chessproblem
-chessproblem_LDADD = $(MULTITHREAD_LIBS)
+chessproblem_chessproblem_SOURCES = \
+chessproblem/m_likely.h \
+chessproblem/chess.cc \
+chessproblem/chess.h \
+chessproblem/chessproblem.cc \
+chessproblem/chessproblem.h \
+chessproblem/main.cc
+
+chessproblem_chessproblem_CXXFLAGS = $(OSFORMAT_CFLAGS)
+
+chessproblem_chessproblem_LDADD = $(OSFORMAT_LIBS) $(MULTITHREAD_LIBS)
 
 # Stuff from our distribution
 EXTRA_DIST = \
-contrib/clean.sh \
+.gitignore \
+CPPLINT.cfg \
+autogen.sh \
 contrib/cpplint.sh \
 contrib/make.sh \
 contrib/tarball.sh \
-contrib/test.pl \
-.gitignore \
-autogen.sh \
-CPPLINT.cfg
+contrib/test.pl
 
-ACLOCAL_AMFLAGS = -I m4 -I martinm4
+CLEANFILES = chessproblem/chessproblem
 
-# Remove things created by autogen.sh
-distclean-local:
-	$(AM_V_at)$(RM) -vfr "$(top_srcdir)/build" \
-		"$(top_srcdir)/config" \
-		"$(top_srcdir)/m4" \
-		"$(top_srcdir)/autom4te.cache"
-	$(AM_V_at)$(RM) -vf \
-		"$(top_srcdir)/aclocal.m4" \
-		"$(top_srcdir)/Makefile.in" \
-		"$(top_srcdir)/configure" \
-		"$(top_srcdir)/config.log" \
-		"$(top_srcdir)/config.status" \
-		"$(top_srcdir)/config.h.in~"
+AUTOCLEANFILES = \
+Makefile.in \
+aclocal.m4 \
+ar-lib \
+config.guess \
+config.h.in~ \
+config.log \
+config.status \
+config.sub \
+configure \
+compile \
+depcomp \
+install-sh \
+ltmain.sh \
+missing \
+test-driver \
+chessproblem*.asc \
+chessproblem*.tar.bz2 \
+chessproblem*.tar.gz \
+chessproblem*.tar.xz \
+chessproblem*.zip
 
-# Remove rpo files (-frepo with gcc) on clean
-clean-local:
-	$(AM_V_at)find "$(top_srcdir)" -name '*.rpo' -exec $(RM) -v -- '{}' '+'
+AUTOCLEANDIRS = \
+autom4te.cache \
+build \
+config \
+m4 \
+tmpwrk[0-9][0-9]*
+
+# Remove autotool created stuff
+.PHONY: autoclean
+autoclean: maintainer-clean
+	$(AM_V_at)cd "$(top_src_dir)"
+	$(AM_V_at)$(RM) -vfr $(AUTOCLEANDIRS)
+	$(AM_V_at)$(RM) -vf $(AUTOCLEANFILES)
