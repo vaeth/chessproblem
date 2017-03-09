@@ -1,14 +1,37 @@
 #!/usr/bin/env perl
 use warnings;
 use strict;
+use Getopt::Long ();
 sub Die {
   print(STDERR @_, "\n");
   exit(1)
 }
-if ((!@ARGV) || ($ARGV[0] =~ m{^-})) {
+sub Usage {
+  my ($exitstatus) = @_;
   $0 =~ m{([^/]*)$};
-  Die("Usage: $1 [path-to]chessproblem [chessproblem options, e.g. -j4]");
+  print STDERR <<"EOUSAGE";
+Usage: $1 [options] [path-to]chessproblem [chessproblem options, e.g. -j4]
+options:
+--quiet -q Do not send informal progress information to stderr
+--help  -h Print this help
+EOUSAGE
+  exit($exitstatus)
 }
+my $quiet = '';
+if (defined(&Getopt::Long::Configure)) {
+  Getopt::Long::Configure('require_order', 'gnu_compat', 'bundling')
+} else {
+  $ENV{'POSIXLY_CORRECT'} = 1;
+  $Getopt::Long::order = $Getopt::Long::REQUIRE_ORDER
+    if (defined($Getopt::Long::REQUIRE_ORDER));
+  $Getopt::Long::gnu_compat = 1;
+  $Getopt::Long::bundling = 1;
+}
+Getopt::Long::GetOptions(
+  'quiet|q', \$quiet,
+  'help|h|?', sub { &Usage(0) },
+) or &usage(2);
+
 my $time = time();
 my @result;
 my $mode = '';
@@ -48,8 +71,13 @@ while (<DATA>) {
   s{\s*([\"\'])([^\"\']*)\1\s*([\"\'])([^\"\']*)\3}{};
   Die('Bad format of line $line') unless(defined($2) && defined($4) &&
     ($2 ne '') && ($4 ne ''));
-  my @cmd = (@ARGV, '-n0', split(/\s+/), $2, $4);
-  my $cmd = join(' ', @ARGV, '-n0', split(/\s+/), "\"$2\"", "\"$4\"");
+  my @cmd = (split(/\s+/));
+  if ($quiet && ($cmd[0] eq '-P')) {
+    shift(@cmd)
+  }
+  unshift(@cmd, @ARGV, $quiet ? '-qn0' : '-Qn0');
+  my $cmd = join(' ', @cmd, "\"$2\"", "\"$4\"");
+  push(@cmd, $2, $4);
   print("$cmd\n");
   open(my $fh, '-|', @cmd) or Die('Failed to start command');
   while (<$fh>) {
@@ -70,7 +98,7 @@ printf("Tests needed $time seconds\n");
 1
 __END__
 
--P -M2 "Kc1" "Ka1"
+-M2 "Kc1" "Ka1"
 No solution exists
 -M3 "Kc1,Na2,c7" "Ka1"
 c7-c8=Q;c7-c8=R

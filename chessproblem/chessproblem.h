@@ -174,9 +174,8 @@ class ChessProblem : public chess::Field {
 
 #ifndef NO_CHESSPROBLEM_THREADS
 
-  void set_max_parallel(int max_parallel) {
-    max_parallel_ = max_parallel;
-  }
+  // max_parallel is set, possibly reduced to value supported by hardware
+  void set_max_parallel(int max_parallel);
 
   ATTRIBUTE_NODISCARD int get_max_parallel() {
     return max_parallel_;

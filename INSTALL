@@ -31,4 +31,4 @@ to create a tarball or to check all source files for google style compliance
 (if you have cpplint.py).
 Finally, when you have compiled "chessproblem" you can run a test suite with
 
-./contrib/test.pl [path-to]chessproblem [chessproblem options, e.g. -j4]
+./contrib/test.pl [-q] [path-to]chessproblem [chessproblem options, e.g. -j4]

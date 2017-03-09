@@ -28,6 +28,12 @@ const int
   ChessProblem::kMaxParallelDefault,
   ChessProblem::kMinHalfMovesDepthDefault;
 
+void ChessProblem::set_max_parallel(int max_parallel) {
+  unsigned max_concurrency = std::thread::hardware_concurrency();
+  max_parallel_ = ((max_concurrency > 0) && (max_parallel > max_concurrency)) ?
+    max_concurrency : max_parallel;
+}
+
 namespace chessproblem {
 
 // For each MoveList, one Communicate object is created.
@@ -234,7 +240,6 @@ int ChessProblem::Solve() {
       // All players "win" always so that we do not cut
       mate_value_ = nomate_value_ = default_return_value_ = true;
   }
-  // osf::Print() % str();
 #ifndef NO_CHESSPROBLEM_THREADS
   num_solutions_found_.store(0, std::memory_order_release);
   thread_count_ = 0;

@@ -758,7 +758,11 @@ AC_MSG_CHECKING([whether osformat can be used])
 AS_VAR_SET([have_osformat], [false])
 m4_ifdef([PKG_CHECK_MODULES],
 	[PKG_CHECK_MODULES([OSFORMAT], [osformat],
-		[AS_VAR_SET([have_osformat], [:])])])
+		[AS_VAR_SET([have_osformat], [:])],
+		[AC_WARN(OSFORMAT not found by pkg-config or pkgconf.
+You might have to adjust PKG_CONFIG_PATH)])],
+	[AC_WARN([PKG_CHECK_MODULES not available.
+Attempting only a poor heuristics])])
 AS_IF([$have_osformat],
 	[MV_MSG_RESULT([yes])],
 	[AS_VAR_SET([OSFORMAT_LIBS], ["-losformat"])
@@ -771,10 +775,11 @@ AS_IF([$have_osformat],
 Format("%.*s") % 2 % 1;
 		]])],
 		[MV_MSG_RESULT([yes], [using guessed paths])],
-		[AC_ERROR(["osformat is not installed or cannot be used.
-Perhaps pkgconf/pkgconfig is not available or not configured correctly.
+		[AC_ERROR([
+The osformat library is not installed or cannot be used.
+Perhaps pkgconf/pkgconfig is not available or PKG_CONFIG_PATH is wrong.
 Or perhaps https://github.com/vaeth/osformat is not installed.
-This is required to build the executable demo program"])])])
+This is required to build the executable demo program])])])
 AC_SUBST([OSFORMAT_LIBS])
 AC_SUBST([OSFORMAT_CFLAGS])
 

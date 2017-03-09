@@ -18,7 +18,6 @@
 /confdefs.h
 /config.guess
 /config.h
-/config.log
 /config.rpath
 /config.status
 /config.sub
@@ -31,7 +30,6 @@
 /missing
 /stamp-h1
 /test-driver
-/test-suite.log
 
 # General patterns are last:
 !*.in
@@ -47,6 +45,8 @@
 *.o-*
 *.o.*
 *.obj
+*.trs
+*.log
 *Makefile
 *Makefile.in
 *Makefile.in.in

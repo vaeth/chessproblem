@@ -22,6 +22,8 @@ chessproblem_chessproblem_CXXFLAGS = $(OSFORMAT_CFLAGS)
 
 chessproblem_chessproblem_LDADD = $(OSFORMAT_LIBS) $(MULTITHREAD_LIBS)
 
+TESTS = contrib/test.sh
+
 # Stuff from our distribution
 EXTRA_DIST = \
 .gitignore \
@@ -30,7 +32,8 @@ autogen.sh \
 contrib/cpplint.sh \
 contrib/make.sh \
 contrib/tarball.sh \
-contrib/test.pl
+contrib/test.pl \
+contrib/test.sh
 
 CLEANFILES = chessproblem/chessproblem
 

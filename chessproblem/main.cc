@@ -9,6 +9,7 @@
 #include <unistd.h>  // getopt
 
 #include <cstdlib>  // atoi, exit
+#include <cstdio>  // stderr, stdout
 
 #include <iostream>  // cin, getline
 #include <string>
@@ -82,6 +83,8 @@ static void Help() {
 "-w   First move is from white (default for mate or selfmate)\n"
 "-p   Output progress on stdout\n"
 "-P   Output progress on stderr\n"
+"-q   quiet: Do not output initial position or warnings\n"
+"-Q   Output ininitial position to stderr\n"
 "-v   Progress output is extremely verbose\n"
 "-V   Output version and exit\n"
 "-h   Output this help text and exit") %
@@ -101,9 +104,11 @@ int main(int argc, char **argv) {
   char eparg('\0');
   chess::Castling castling(chess::kAllCastling);
   ChessProblemDemo chessproblem(2);
-  bool get_stdin(false);
+  bool get_stdin(false), quiet(false);
+  int max_parallel(0);
+  enum { kStdout, kStderr, kNone } output_initial = kStdout;
   int opt;
-  while ((opt = getopt(argc, argv, "pPij:J:m:M:s:S:H:n:c:e:bwvVh")) != -1) {
+  while ((opt = getopt(argc, argv, "pPij:J:m:M:s:S:H:n:c:e:bwqQvVh")) != -1) {
     switch (opt) {
       case 'p':
         chessproblem.progress_io_ = stdout;
@@ -115,7 +120,7 @@ int main(int argc, char **argv) {
         get_stdin = true;
         break;
       case 'j':
-        chessproblem.set_max_parallel(CheckNum(optarg, 1, 'j'));
+        max_parallel = CheckNum(optarg, 1, 'j');
         break;
       case 'J':
         chessproblem.set_min_half_moves_depth(CheckNum(optarg, 1, 'J'));
@@ -179,6 +184,13 @@ int main(int argc, char **argv) {
       case 'w':
         chessproblem.set_color(chess::kWhite);
         break;
+      case 'q':
+        quiet = true;
+        output_initial = kNone;
+        break;
+      case 'Q':
+        output_initial = kStderr;
+        break;
       case 'v':
         chessproblem.verbose = true;
         break;
@@ -199,6 +211,15 @@ int main(int argc, char **argv) {
     osformat::SayError("One of the options -M, -S, or -H has to be specified\n"
       "Use option -h for help");
     std::exit(EXIT_FAILURE);
+  }
+  if (max_parallel > 0) {
+    chessproblem.set_max_parallel(max_parallel);
+    if (!quiet) {
+      auto get_parallel = chessproblem.get_max_parallel();
+      if (get_parallel < max_parallel) {
+        osformat::SayError("warning: -j%s forced") % get_parallel;
+      }
+    }
   }
   chessproblem.set_color();
   chess::EnPassant ep(chess::kNoEnPassant);
@@ -265,6 +286,10 @@ int main(int argc, char **argv) {
   chessproblem.set_ep(ep);
   chess::Castling new_castling(chessproblem.CalcCastling(castling));
   chessproblem.set_castling(new_castling);
+  if (output_initial != kNone) {
+    osformat::Format((output_initial == kStderr) ? stderr : stdout,
+      osformat::Special::Newline()) % chessproblem;
+  }
   int num(chessproblem.Solve());
   if (num == 0) {
     osformat::Say("No solution exists");
