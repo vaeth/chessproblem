@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [2.5],
+AC_INIT([chessproblem], [2.7],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -168,6 +168,7 @@ AS_IF([$optimization],
 	[MV_ADDFLAGS([my_cxxadd], [CXXFLAGS], [MV_RUN_IFELSE_LINK], [ \
 			-O2 \
 			-DNDEBUG \
+			-DHAVE_EXCEPTIONS=0 \
 			-fomit-frame-pointer \
 			-fno-common \
 			-fstrict-aliasing \
@@ -391,10 +392,9 @@ AS_IF([$debugging],
 			-fsanitize=alignment
 			-fsanitize=object-size
 			-fsanitize=vptr
+			-fsanitize=thread
 			-fcheck-pointer-bounds
 		"])
-	# The following -fsanitize do not work properly
-	# -fsanitize=threads
 	MV_ADDFLAGS([my_ldadd], [LDFLAGS], [MV_RUN_IFELSE_LINK], [ \
 			$my_sanitize \
 		], [$my_ldfatal], [], [:])
@@ -754,7 +754,6 @@ AS_IF([$propagate_signal],
 		[1],
 		[Define if memory intensive (faster?/slower?) thread policy should be used])])
 
-AC_MSG_CHECKING([whether osformat can be used])
 AS_VAR_SET([have_osformat], [false])
 m4_ifdef([PKG_CHECK_MODULES],
 	[PKG_CHECK_MODULES([OSFORMAT], [osformat],
@@ -763,6 +762,7 @@ m4_ifdef([PKG_CHECK_MODULES],
 You might have to adjust PKG_CONFIG_PATH)])],
 	[AC_WARN([PKG_CHECK_MODULES not available.
 Attempting only a poor heuristics])])
+AC_MSG_CHECKING([whether osformat can be used])
 AS_IF([$have_osformat],
 	[MV_MSG_RESULT([yes])],
 	[AS_VAR_SET([OSFORMAT_LIBS], ["-losformat"])

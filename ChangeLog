@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.7
+	Martin Väth <martin at mvath.de>:
+	- configure.ac: Support for -fsanitize=thread
+
 *chessproblem-2.6
 	Martin Väth <martin at mvath.de>:
 	- New options -q and -Q
