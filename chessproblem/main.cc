@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include <osformat.h>
+#include <osformat.h>  // NOLINT(build/include_order)
 
 #include "chessproblem/chess.h"
 #include "chessproblem/chessproblem.h"
