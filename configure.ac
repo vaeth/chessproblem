@@ -688,21 +688,30 @@ AS_IF([$support_multithreading],
   AS_VAR_COPY([saveldflags], [LDFLAGS])
   AS_VAR_APPEND([LDFLAGS], [" $MULTITHREAD_LIBS"])
   MV_RUN_IFELSE_LINK([AC_LANG_PROGRAM([[
+#include <vector>
 #include <atomic>
 #include <mutex>
 #include <thread>
 std::atomic_int ret(1);
 std::mutex m;
-static void f(int i);
-static void f(int i) {
+class Dummy {
+public:
+void f(int i);
+int c(int i) {
+	std::vector<std::thread> threads;
+	threads.emplace_back(&Dummy::f, this, i);
+	threads.back().join();
+	return ret.load(std::memory_order_consume);
+}
+};
+void Dummy::f(int i) {
 	m.lock();
-	ret.store(0, std::memory_order_release);
+	ret.store(i, std::memory_order_release);
 	m.unlock();
 }
 ]], [[
-	std::thread t(f, 0);
-	t.join();
-	return ret.load(std::memory_order_consume);
+	Dummy dummy;
+	return dummy.c(0);
 		]])],
 	[],
 	[AS_VAR_SET([support_multithreading], [false])])
@@ -711,7 +720,7 @@ AS_IF([$support_multithreading],
 	[MV_MSG_RESULT([yes])],
 	[MV_MSG_RESULT([no])
 	AS_IF([$requested_multithreading],
-		[AC_MSG_ERROR(multithreading requested but not available)])
+		[AC_MSG_WARN(multithreading requested but not available)])
 	AC_DEFINE([NO_CHESSPROBLEM_THREADS],
 		[1],
 		[Define if multithreading is not wanted/possible])

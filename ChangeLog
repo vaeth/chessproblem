@@ -3,6 +3,7 @@
 *chessproblem-2.7
 	Martin Väth <martin at mvath.de>:
 	- configure.ac: Support for -fsanitize=thread
+	- configure.ac: Make thread check more realistic but non-fatal
 
 *chessproblem-2.6
 	Martin Väth <martin at mvath.de>:
