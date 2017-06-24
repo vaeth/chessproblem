@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [1.6],
+AC_INIT([chessproblem], [1.7],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])
@@ -46,7 +46,7 @@ AC_ARG_ENABLE([new_dialect],
 		[enable most current C++ dialect])],
 	[MV_ENABLE([new_dialect])
 	AS_VAR_SET([cmt_new_dialect], ["on request"])],
-	[AS_VAR_SET([new_dialect], [false])
+	[AS_VAR_SET([new_dialect], [:])
 	AS_VAR_SET([cmt_new_dialect], ["default"])])
 
 AC_ARG_ENABLE([optimization],

@@ -1,5 +1,10 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.7
+	Martin Väth <martin at mvath.de>:
+	- Fix stress test for C++11 (fixes compilation with clang & gcc++ lib)
+	- configure.ac: Make new dialect the default
+
 *chessproblem-1.6
 	Martin Väth <martin at mvath.de>:
 	- Fix optimization in build system

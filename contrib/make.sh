@@ -101,7 +101,7 @@ recache=false
 clear_ccache=false
 debugging=false
 command -v clang++ >/dev/null 2>&1 && clang=: || clang=false
-dialect='enable'
+dialect=
 OPTIND=1
 while getopts 'qgGdnewoCxXyYdc:j:rhH' opt
 do	case $opt in
