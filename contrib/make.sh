@@ -107,7 +107,7 @@ optimization=false
 recache=false
 clear_ccache=false
 debugging=false
-dialect='enable'
+dialect=
 OPTIND=1
 while getopts 'qgGdnewtToCxXyYdc:j:rhH' opt
 do	case $opt in
