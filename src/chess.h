@@ -714,17 +714,17 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // No destructor is needed, but we must take care when copying/moving,
   // because we need to fixup refs_ to point to the copied/moved iterators.
 
-  Field(const Field& f) {
+  Field(const Field& f) noexcept {
     *this = f;
   }
 
-  Field(const Field&& f) {
+  Field(const Field&& f) noexcept {
     *this = f;
   }
 
-  Field& operator=(const Field& f);
+  Field& operator=(const Field& f) noexcept;
 
-  Field& operator=(const Field&& f);
+  Field& operator=(const Field&& f) noexcept;
 
  private:
   typedef PosList::iterator Pointer;
@@ -732,7 +732,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   typedef std::array<Pos, kIndexMax + 1> KingsPos;
 
   // Needed only inline for the copy/move assignment operator
-  void RecreateRefs() {
+  void RecreateRefs() noexcept {
     for (auto& l : pos_lists_) {
       for (PosList::iterator it(l.begin()); it != l.end(); ++it) {
         refs_[*it] = it;
@@ -874,7 +874,7 @@ class PushGuardDisarmable {
     field_ = field;
   }
 
-  ~PushGuardDisarmable() {
+  ~PushGuardDisarmable() noexcept {
     if (field_ != nullptr) {
       field_->PopMove();
     }

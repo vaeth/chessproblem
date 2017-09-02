@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include <string>
+#include <utility>  // move
 
 #include "src/m_attribute.h"
 #include "src/m_likely.h"
@@ -272,7 +273,7 @@ void Field::clear() {
 }
 
 // Copy assignment.
-Field& Field::operator=(const Field& f) {
+Field& Field::operator=(const Field& f) noexcept {
   field_ = f.field_;
   color_ = f.color_;
   ep_ = f.ep_;
@@ -287,14 +288,14 @@ Field& Field::operator=(const Field& f) {
 // Move assignment.
 // The code looks exactly like the copy assignment, but the semantics differs,
 // because all assignments are actually move assignments...
-Field& Field::operator=(const Field&& f) {
-  field_ = f.field_;
-  color_ = f.color_;
-  ep_ = f.ep_;
-  castling_ = f.castling_;
-  pos_lists_ = f.pos_lists_;
-  kings_ = f.kings_;
-  move_stack_ = f.move_stack_;
+Field& Field::operator=(const Field&& f)  noexcept {
+  field_ = std::move(f.field_);
+  color_ = std::move(f.color_);
+  ep_ = std::move(f.ep_);
+  castling_ = std::move(f.castling_);
+  pos_lists_ = std::move(f.pos_lists_);
+  kings_ = std::move(f.kings_);
+  move_stack_ = std::move(f.move_stack_);
   RecreateRefs();
   return *this;
 }

@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.8
+	Martin Väth <martin at mvath.de>:
+	- Add noexcept to move constructor/assignment definitions
+
 *chessproblem-1.7
 	Martin Väth <martin at mvath.de>:
 	- Fix stress test for C++11 (fixes compilation with clang & gcc++ lib)
