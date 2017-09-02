@@ -708,9 +708,9 @@ note that it is "on head" concerning the moves and mirrored concerning columns
 
   void clear();
 
-  void assign(const Field& f);
+  void assign(const Field& f) noexcept;
 
-  void assign(Field&& f);
+  void assign(Field&& f) noexcept;
 
   Field() {
     ClearField();
@@ -719,20 +719,20 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   // No destructor is needed, but we must take care when copying/moving,
   // because we need to fixup refs_ to point to the copied/moved iterators.
 
-  Field(const Field& f) {
+  Field(const Field& f) noexcept {
     assign(f);
   }
 
-  Field(Field&& f) {
+  Field(Field&& f) noexcept {
     assign(std::move(f));
   }
 
-  Field& operator=(const Field& f) {
+  Field& operator=(const Field& f) noexcept {
     assign(f);
     return *this;
   }
 
-  Field& operator=(Field&& f) {
+  Field& operator=(Field&& f) noexcept {
     assign(std::move(f));
     return *this;
   }
@@ -743,7 +743,7 @@ note that it is "on head" concerning the moves and mirrored concerning columns
   typedef std::array<Pos, kIndexMax + 1> KingsPos;
 
   // Needed only inline for the copy/move assignment operator
-  void RecreateRefs() {
+  void RecreateRefs() noexcept {
     for (auto& l : pos_lists_) {
       for (PosList::iterator it(l.begin()); it != l.end(); ++it) {
         refs_[*it] = it;
@@ -890,7 +890,7 @@ class unique_push {
     field_ = field;
   }
 
-  Field *release() {
+  Field *release() noexcept {
     Field *ret(field_);
     field_ = nullptr;
     return ret;
@@ -912,11 +912,11 @@ class unique_push {
   unique_push(const unique_push& g) = delete;
   unique_push& operator=(const unique_push& g) = delete;
 
-  unique_push(unique_push&& g) {
+  unique_push(unique_push&& g) noexcept {
     field_ = g.release();
   }
 
-  unique_push& operator=(unique_push&& g) {
+  unique_push& operator=(unique_push&& g) noexcept {
     field_ = g.release();
     return *this;
   }

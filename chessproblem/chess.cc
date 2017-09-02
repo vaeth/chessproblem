@@ -272,7 +272,7 @@ void Field::clear() {
   ClearStack();
 }
 
-void Field::assign(const Field& f) {
+void Field::assign(const Field& f) noexcept {
   field_ = f.field_;
   color_ = f.color_;
   ep_ = f.ep_;
@@ -283,7 +283,7 @@ void Field::assign(const Field& f) {
   RecreateRefs();
 }
 
-void Field::assign(Field&& f) {
+void Field::assign(Field&& f) noexcept {
   field_ = std::move(f.field_);
   color_ = std::move(f.color_);
   ep_ = std::move(f.ep_);
