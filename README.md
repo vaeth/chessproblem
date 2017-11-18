@@ -1,7 +1,9 @@
-chessproblem - chess and chess problem C++11 libraries with a demo program for
+# chessproblem
+
+chess and chess problem C++11 libraries with a demo program for
 finding solutions of chess problems (mate, selfmate, and helpmate) with cooks
 
-(C) Martin Väth <martin@mvath.de>
+(C) Martin Väth (martin at mvath.de).
 This project is distributed under the terms of the
 GNU General Public License v2.
 
@@ -28,7 +30,7 @@ https://github.com/vaeth/eix/
 The mentioned chess libarary is written with speed in mind.
 Note that if you compile normally, there is an enormous slowdown in the chess
 library due to many asserts: Disable them to get the full speed, using e.g.
--DNDEBUG -DNO_DEBUG -DG_DISABLE_ASSERT
+`-DNDEBUG -DNO_DEBUG -DG_DISABLE_ASSERT`
 
 The library uses some techniques like managing lists of nonempty fields
 which the inspiring project had not implemented. Also it is simpler to use
@@ -36,25 +38,31 @@ which the inspiring project had not implemented. Also it is simpler to use
 for which one would need to check separately whether the king is in check
 after the move).
 
-The chess library consists of the files:
+The __chess library__ consists of the files:
 
-chess.h    - the main header which also documents how the chess library is used
-chess.cc   - the implementation of the chess library
-m_attribute.h - auxiliary macros for compiler specific attributes to
-             suppress/emit warnings or speed up the library
-m_likely.h - auxiliary compiler-dependent macros LIKELY and UNLIKELY for tests
-             which might speed up the library
+- `chess.h`:
+	the main header which also documents how the chess library is used
+- `chess.cc`:
+	the implementation of the chess library
+- `m_attribute.h`:
+	auxiliary macros for compiler specific attributes to
+	suppress/emit warnings or speed up the library
+- `m_likely.h`:
+	auxiliary compiler-dependent macros `LIKELY` and `UNLIKELY` for tests
+	which might speed up the library
 
 The library is written in such a way that it can easily be adapted for
 different field sizes than 8x8.
 
-Also the chessproblem library is rather general:
+Also the __chessproblem library__ is rather general:
 
-chessproblem.h  - header and documentation for the chessproblem library
-chessproblem.cc - implementation of the chessproblem library
+- `chessproblem.h`:
+	header and documentation for the chessproblem library
+- `chessproblem.cc`:
+	implementation of the chessproblem library
 
 It is a general recursive solver for chess problems.
-There is no I/O: the output happens only over a virtual Output() function
+There is no I/O: the output happens only over a `virtual Output()` function
 which has to be overridden if output is desired.
 
 Currently, only a single thread is used. There is a multithreaded version in
@@ -62,12 +70,15 @@ preparation which will have a slightly different API concerning Output().
 
 The demo program is kept relatively simple:
 
-main.cc     - the main function for initializing and calling the library
-formated.h  - an auxiliary class for formatting strings and I/O
-formated.cc - implementation of the above class
+- `main.cc`:
+	the main function for initializing and calling the library
+- `formated.h`:
+	an auxiliary class for formatting strings and I/O
+- `formated.cc`:
+	implementation of the above class
 
-The usage of the demo "chessproblem" is rather elementary and unix style:
+The usage of the demo `chessproblem` is rather elementary and unix style:
 Just the data can be entered over options and arguments (or stdin).
 Then the output is printed, and the program exits.
 
-See "chessproblem -h" for further help.
+See `chessproblem -h` for further help.
