@@ -29,9 +29,13 @@ const int
   ChessProblem::kMinHalfMovesDepthDefault;
 
 void ChessProblem::set_max_parallel(int max_parallel) {
-  unsigned max_concurrency = std::thread::hardware_concurrency();
+#ifdef UNLIMITED
+  max_parallel_ = max_parallel;
+#else
+  static auto max_concurrency = std::thread::hardware_concurrency();
   max_parallel_ = ((max_concurrency > 0) && (max_parallel > max_concurrency)) ?
     max_concurrency : max_parallel;
+#endif
 }
 
 namespace chessproblem {

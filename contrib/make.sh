@@ -16,6 +16,7 @@ Available options are
   -e  Keep environment - do not modify LDFLAGS, CXXFLAGS, CFLAGS, CC
   -w  Enable warnings
   -t  With propagate-signal (for multithreading)
+  -u  Unlimited number of threads
   -T  No multithreading
   -o  Enable optimization
   -g  Use clang++, setting CXX, filtering some flags (default if available)
@@ -107,9 +108,10 @@ optimization=false
 recache=false
 clear_ccache=false
 debugging=false
+unlimited=false
 dialect=
 OPTIND=1
-while getopts 'qgGdnewtToCxXyYdc:j:rhH' opt
+while getopts 'qgGdnewtuToCxXyYdc:j:rhH' opt
 do	case $opt in
 	q)	quiet=:;;
 	g)	clang=:;;
@@ -118,6 +120,7 @@ do	case $opt in
 	e)	keepenv=:;;
 	w)	warnings=:;;
 	t)	propagate_signal=:;;
+	u)	unlimited=:;;
 	T)	multithreading=false;;
 	o)	optimization=:;;
 	C)	use_ccache=false;;
@@ -149,6 +152,7 @@ $multithreading && configure_extra=$configure_extra' --with-multithreading' \
 	|| configure_extra=$configure_extra' --without-multithreading'
 ! $propagate_signal \
 	|| configure_extra=$configure_extra' --enable-propagate-signal'
+! $unlimited || configure_extra=$configure_extra' --enable-unlimited'
 $quiet && quietredirect='>/dev/null' || quietredirect=
 
 if $use_chown

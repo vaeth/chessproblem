@@ -763,6 +763,18 @@ AS_IF([$propagate_signal],
 		[1],
 		[Define if memory intensive (faster?/slower?) thread policy should be used])])
 
+AC_MSG_CHECKING([unlimited])
+AC_ARG_ENABLE([unlimited],
+	[AS_HELP_STRING([--enable-unlimited],
+		[enable if number of thread should not be limited by hardware_concurrency])],
+	[MV_ENABLE([unlimited])],
+	[AS_VAR_SET([unlimited], [false])])
+MV_MSG_RESULT_BIN([$unlimited])
+AS_IF([$unlimited],
+	[AC_DEFINE([UNLIMITED],
+		[1],
+		[Define if number of threads should not be limited by hardware_concurrency])])
+
 AS_VAR_SET([have_osformat], [false])
 m4_ifdef([PKG_CHECK_MODULES],
 	[PKG_CHECK_MODULES([OSFORMAT], [osformat],

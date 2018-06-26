@@ -1,5 +1,10 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.10
+	Martin Väth <martin at mvath.de>:
+	- Support --enable-unlimited for testing
+	- contrib/make.sh: Fix export
+
 *chessproblem-2.9
 	Martin Väth <martin at mvath.de>:
 	- Add noexcept to move constructor/assignment definitions
