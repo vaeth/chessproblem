@@ -187,6 +187,11 @@ FilterClang() {
 		-ftracer
 }
 
+Export() {
+	eval "Info \"export \$1='\${$1}'\""
+	export $1
+}
+
 if ! $keepenv
 then	unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS CXX
 	if command -v portageq >/dev/null 2>&1
@@ -202,10 +207,10 @@ then	unset CFLAGS CXXFLAGS LDFLAGS CPPFLAGS CXX
 	fi
 	[ -z "${CXX:++}" ] || export CXX
 fi
-[ -z "${CXXFLAGS:++}" ] || Info "export CXXFLAGS='${CXXFLAGS}'"
-[ -z "${LDFLAGS:++}" ] || Info "export LDFLAGS='${LDFLAGS}'"
-[ -z "${CPPFLAGS:++}" ] || Info "export CPPFLAGS='${CPPFLAGS}'"
-[ -z "${CXX:++}" ] || Info "export CXX='${CXX}'"
+[ -z "${CXXFLAGS:++}" ] || Export CXXFLAGS
+[ -z "${LDFLAGS:++}" ] || Export LDFLAGS
+[ -z "${CPPFLAGS:++}" ] || Export CPPFLAGS
+[ -z "${CXX:++}" ] || Export CXX
 if ! test -e Makefile
 then	if ! test -e configure || ! test -e Makefile.in
 	then	InfoVerbose './autogen.sh' $automake_extra
