@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.11
+	- Bugfix in thread counting
+	- contrib/test.sh: Support custom parameter
+
 *chessproblem-2.10
 	Martin Väth <martin at mvath.de>:
 	- Support --enable-unlimited for testing

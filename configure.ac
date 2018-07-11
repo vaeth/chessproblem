@@ -5,7 +5,7 @@
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [2.8],
+AC_INIT([chessproblem], [2.11],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])

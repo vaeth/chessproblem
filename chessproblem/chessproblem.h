@@ -298,7 +298,7 @@ class ChessProblem : public chess::Field {
     if (curr_count >= max_threads_) {
       return false;
     }
-    thread_count_.store(std::memory_order_release);
+    thread_count_.store(curr_count + 1, std::memory_order_release);
     return true;
   }
 
