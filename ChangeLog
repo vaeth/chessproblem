@@ -1,5 +1,10 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.12
+	- Fix race (regression since chessproblem-2.0):
+	  Avoid removing MoveList while exiting (canceled) subthreads might
+	  still own a chess::push_guard
+
 *chessproblem-2.11
 	- Bugfix in thread counting
 	- contrib/test.sh: Support custom parameter

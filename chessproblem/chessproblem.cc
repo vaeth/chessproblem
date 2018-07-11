@@ -543,14 +543,11 @@ void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
     delete field;
     DecreaseThreads();  // We might be not ready, but we will only wait
   }
-  if (communicate->GotSignal()) {
-    for (auto& t : threads) {  // No need to wait for exiting threads
-      t.detach();
-    }
-  } else {
-    for (auto& t : threads) {
-      t.join();
-    }
+  // Even in case of communicate->GotSignal() we must wait for exiting threads:
+  // Otherwise the MoveList might have been destroyed before a
+  // chess::push_guard of such a thread gets out of scope,
+  for (auto& t : threads) {
+    t.join();
   }
 }
 #endif  // NO_CHESSPROBLEM_THREADS
