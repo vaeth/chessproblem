@@ -4,6 +4,8 @@
 	- Fix race (regression since chessproblem-2.0):
 	  Avoid removing MoveList while exiting (canceled) subthreads might
 	  still own a chess::push_guard
+	- Fix memory leak (undeleted field in subthread) when forced canceling.
+	  This is also a regression since chessproblem-2.0
 
 *chessproblem-2.11
 	- Bugfix in thread counting

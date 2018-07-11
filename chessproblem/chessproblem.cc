@@ -512,7 +512,7 @@ void ChessProblem::SolverThread(chessproblem::Communicate *communicate,
       }
     }
     if (UNLIKELY(ProgressCancel(current_move, field))) {
-      return;
+      break;
     }
     field->PushMove(current_move);
     bool opponent(RecursiveSolver(communicate, field));
