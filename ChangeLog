@@ -1,5 +1,8 @@
 # ChangeLog for chessproblem
 
+*chessproblem-2.13
+	- Add SPDX-License-Identifier
+
 *chessproblem-2.12
 	- Fix race (regression since chessproblem-2.0):
 	  Avoid removing MoveList while exiting (canceled) subthreads might
