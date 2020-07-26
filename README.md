@@ -6,6 +6,7 @@ finding solutions of chess problems (mate, selfmate, and helpmate) with cooks
 (C) Martin Väth (martin at mvath.de).
 This project is distributed under the terms of the
 GNU General Public License v2.
+SPDX-License-Identifier: GPL-2.0-only
 
 This project was written within about one day (plus about the same time for
 testing/debugging) to train myself for a job interview in programming in C++.

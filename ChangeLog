@@ -1,5 +1,9 @@
 # ChangeLog for chessproblem
 
+*chessproblem-1.10
+	Martin Väth <martin at mvath.de>:
+	- Add SPDX-License-Identifier
+
 *chessproblem-1.9
 	Martin Väth <martin at mvath.de>:
 	- Fix export in contrib/make.sh

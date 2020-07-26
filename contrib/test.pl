@@ -1,4 +1,6 @@
 #!/usr/bin/env perl
+# Copyright (c) Martin V\"ath <martin at mvath.de>
+# SPDX-License-Identifier: GPL-2.0-only
 use warnings;
 use strict;
 sub Die {

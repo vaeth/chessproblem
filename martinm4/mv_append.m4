@@ -1,5 +1,6 @@
 dnl This file is part of the chessproblem project and distributed under the
 dnl terms of the GNU General Public License v2.
+dnl SPDX-License-Identifier: GPL-2.0-only
 dnl
 dnl Copyright (c)
 dnl  Martin V\"ath <martin@mvath.de>

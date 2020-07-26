@@ -1,11 +1,12 @@
 # This file is part of the chessproblem project and distributed under the
 # terms of the GNU General Public License v2.
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (c)
 #  Martin V\"ath <martin@mvath.de>
 
 dnl keep version in same line as AC_INIT for possible usage in scripts
-AC_INIT([chessproblem], [1.7],
+AC_INIT([chessproblem], [1.10],
   [https://github.com/vaeth/chessproblem/issues/],
   [chessproblem],
   [https://github.com/vaeth/chessproblem/])

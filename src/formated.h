@@ -1,5 +1,6 @@
 // This file is part of the chessproblem project and distributed under the
 // terms of the GNU General Public License v2.
+// SPDX-License-Identifier: GPL-2.0-only
 //
 // It is based on the eix::format class from eix
 //
